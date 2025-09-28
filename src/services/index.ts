@@ -1,0 +1,9 @@
+// Service exports for dynamic imports
+export { authService } from './auth.service';
+export { userService } from './user.service';
+export { roleService } from './role.service';
+export { permissionService } from './permission.service';
+export { locationService } from './location.service';
+export { organizationService } from './organization.service';
+export { dashboardService } from './dashboard.service';
+export { apiService } from './api';
