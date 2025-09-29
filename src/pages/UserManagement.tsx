@@ -33,29 +33,43 @@ import { toast } from 'sonner';
 const userCreateSchema = z.object({
   login_id: z.string()
     .min(3, 'Login ID must be at least 3 characters')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Login ID can only contain letters, numbers, and underscores'),
+    .regex(/^[a-zA-Z0-9_@-]+$/, 'Login ID can only contain letters, numbers, @, _, and - characters'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   mobile: z.string().optional(),
   password: z.string()
     .min(8, 'Password must be at least 8 characters'),
-  user_type: z.enum(['super_admin', 'admin', 'billing_manager', 'noc_manager', 'support_staff', 'reseller_admin', 'sub_reseller_admin', 'field_staff']),
+  user_type: z.enum(['super_admin', 'admin', 'billing_manager', 'noc_manager', 'support_staff', 'reseller_admin', 'sub_reseller_admin', 'field_staff', 'accountant', 'customer_service', 'technical_support']),
   employee_id: z.string().optional(),
+  department: z.string().optional(),
   designation: z.string().optional(),
+  salary: z.string().optional(),
+  date_of_joining: z.string().optional(),
+  date_of_birth: z.string().optional(),
+  contact_person_name: z.string().optional(),
+  contact_person_phone: z.string().optional(),
+  address: z.string().optional(),
+  district: z.string().optional(),
+  thana: z.string().optional(),
+  postal_code: z.string().optional(),
+  remarks: z.string().optional(),
+  language_preference: z.enum(['en', 'bn']).optional(),
+  timezone: z.string().optional(),
   is_active: z.boolean().default(true),
 });
 
 const userUpdateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
-  mobile: z.string().min(1, 'Mobile number is required').optional(),
+  mobile: z.string().optional(),
   employee_id: z.string().optional(),
-  designation: z.string().optional(),
   department: z.string().optional(),
+  designation: z.string().optional(),
   salary: z.string().optional(),
   date_of_joining: z.string().optional(),
-  address: z.string().optional(),
+  date_of_birth: z.string().optional(),
   contact_person_name: z.string().optional(),
   contact_person_phone: z.string().optional(),
+  address: z.string().optional(),
   district: z.string().optional(),
   thana: z.string().optional(),
   postal_code: z.string().optional(),
@@ -207,10 +221,11 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
       name: user.name,
       mobile: user.mobile || '',
       employee_id: user.employee_id || '',
-      designation: user.designation || '',
       department: user.department || '',
+      designation: user.designation || '',
       salary: user.salary || '',
       date_of_joining: user.date_of_joining || '',
+      date_of_birth: user.date_of_birth || '',
       address: user.address || '',
       contact_person_name: user.contact_person_name || '',
       contact_person_phone: user.contact_person_phone || '',
@@ -225,6 +240,24 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
       user_type: 'field_staff',
       language_preference: 'en',
       timezone: 'Asia/Dhaka',
+      name: '',
+      email: '',
+      login_id: '',
+      password: '',
+      mobile: '',
+      employee_id: '',
+      department: '',
+      designation: '',
+      salary: '',
+      date_of_joining: '',
+      date_of_birth: '',
+      contact_person_name: '',
+      contact_person_phone: '',
+      address: '',
+      district: '',
+      thana: '',
+      postal_code: '',
+      remarks: '',
     },
   });
 
@@ -238,6 +271,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
         department: user.department || '',
         salary: user.salary || '',
         date_of_joining: user.date_of_joining || '',
+        date_of_birth: user.date_of_birth || '',
         address: user.address || '',
         contact_person_name: user.contact_person_name || '',
         contact_person_phone: user.contact_person_phone || '',
@@ -259,7 +293,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
 
       // List of optional fields that should be undefined if empty
       const optionalFields = [
-        'employee_id', 'designation', 'department', 'date_of_joining',
+        'mobile', 'employee_id', 'designation', 'department', 'salary', 'date_of_joining', 'date_of_birth',
         'address', 'contact_person_name', 'contact_person_phone',
         'district', 'thana', 'postal_code', 'remarks', 'profile_photo'
       ];
@@ -326,10 +360,13 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
                 <option value="support_staff">Support Staff</option>
                 <option value="noc_manager">NOC Manager</option>
                 <option value="billing_manager">Billing Manager</option>
-                <option value="reseller_admin">Reseller Admin</option>
-                <option value="sub_reseller_admin">Sub Reseller Admin</option>
+                <option value="reseller_admin">Reseller Administrator</option>
+                <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
                 <option value="admin">Administrator</option>
                 <option value="super_admin">Super Administrator</option>
+                <option value="accountant">Accountant</option>
+                <option value="customer_service">Customer Service</option>
+                <option value="technical_support">Technical Support</option>
               </select>
               {(errors as any).user_type && (
                 <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
@@ -358,109 +395,117 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           disabled={loading}
         />
         <Input
+          label="Department (Optional)"
+          {...register('department')}
+          error={(errors as any).department?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Department (Optional)"
+          {...register('department')}
+          error={(errors as any).department?.message}
+          disabled={loading}
+        />
+        <Input
           label="Designation (Optional)"
           {...register('designation')}
           error={errors.designation?.message}
           disabled={loading}
         />
-        {/* Additional fields for editing */}
-        {isEditing && (
-          <>
-            <Input
-              label="Department (Optional)"
-              {...register('department')}
-              error={(errors as any).department?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Salary (Optional)"
-              {...register('salary')}
-              error={(errors as any).salary?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Date of Joining (Optional)"
-              type="date"
-              {...register('date_of_joining')}
-              error={(errors as any).date_of_joining?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Address (Optional)"
-              {...register('address')}
-              error={(errors as any).address?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Contact Person Name (Optional)"
-              {...register('contact_person_name')}
-              error={(errors as any).contact_person_name?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Contact Person Phone (Optional)"
-              {...register('contact_person_phone')}
-              error={(errors as any).contact_person_phone?.message}
-              disabled={loading}
-            />
-            <Input
-              label="District (Optional)"
-              {...register('district')}
-              error={(errors as any).district?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Thana (Optional)"
-              {...register('thana')}
-              error={(errors as any).thana?.message}
-              disabled={loading}
-            />
-            <Input
-              label="Postal Code (Optional)"
-              {...register('postal_code')}
-              error={(errors as any).postal_code?.message}
-              disabled={loading}
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Language Preference
-              </label>
-              <select
-                {...register('language_preference')}
-                disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              >
-                <option value="en">English</option>
-                <option value="bn">Bengali</option>
-              </select>
-              {(errors as any).language_preference && (
-                <p className="text-sm text-red-600 mt-1">{(errors as any).language_preference.message}</p>
-              )}
-            </div>
-            <Input
-              label="Timezone"
-              {...register('timezone')}
-              error={(errors as any).timezone?.message}
-              disabled={loading}
-              placeholder="Asia/Dhaka"
-            />
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Remarks (Optional)
-              </label>
-              <textarea
-                {...register('remarks')}
-                disabled={loading}
-                rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="Additional notes..."
-              />
-              {(errors as any).remarks && (
-                <p className="text-sm text-red-600 mt-1">{(errors as any).remarks.message}</p>
-              )}
-            </div>
-          </>
-        )}
+        <Input
+          label="Salary (Optional)"
+          {...register('salary')}
+          error={(errors as any).salary?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Date of Birth (Optional)"
+          type="date"
+          {...register('date_of_birth')}
+          error={(errors as any).date_of_birth?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Date of Joining (Optional)"
+          type="date"
+          {...register('date_of_joining')}
+          error={(errors as any).date_of_joining?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Address (Optional)"
+          {...register('address')}
+          error={(errors as any).address?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Contact Person Name (Optional)"
+          {...register('contact_person_name')}
+          error={(errors as any).contact_person_name?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Contact Person Phone (Optional)"
+          {...register('contact_person_phone')}
+          error={(errors as any).contact_person_phone?.message}
+          disabled={loading}
+        />
+        <Input
+          label="District (Optional)"
+          {...register('district')}
+          error={(errors as any).district?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Thana (Optional)"
+          {...register('thana')}
+          error={(errors as any).thana?.message}
+          disabled={loading}
+        />
+        <Input
+          label="Postal Code (Optional)"
+          {...register('postal_code')}
+          error={(errors as any).postal_code?.message}
+          disabled={loading}
+        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Language Preference
+          </label>
+          <select
+            {...register('language_preference')}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            <option value="en">English</option>
+            <option value="bn">Bengali</option>
+          </select>
+          {(errors as any).language_preference && (
+            <p className="text-sm text-red-600 mt-1">{(errors as any).language_preference.message}</p>
+          )}
+        </div>
+        <Input
+          label="Timezone"
+          {...register('timezone')}
+          error={(errors as any).timezone?.message}
+          disabled={loading}
+          placeholder="Asia/Dhaka"
+        />
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Remarks (Optional)
+          </label>
+          <textarea
+            {...register('remarks')}
+            disabled={loading}
+            rows={3}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            placeholder="Additional notes..."
+          />
+          {(errors as any).remarks && (
+            <p className="text-sm text-red-600 mt-1">{(errors as any).remarks.message}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex justify-end space-x-3 pt-6 border-t">
@@ -495,6 +540,7 @@ export const UserManagement: React.FC = () => {
     deleteUser,
     clearError,
   } = useUsers();
+
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);

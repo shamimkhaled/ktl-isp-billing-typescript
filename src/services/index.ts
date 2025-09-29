@@ -5,5 +5,7 @@ export { roleService } from './role.service';
 export { permissionService } from './permission.service';
 export { locationService } from './location.service';
 export { organizationService } from './organization.service';
+export { departmentService } from './department.service';
+export { designationService } from './designation.service';
 export { dashboardService } from './dashboard.service';
 export { apiService } from './api';

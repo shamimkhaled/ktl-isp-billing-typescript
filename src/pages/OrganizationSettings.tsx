@@ -23,30 +23,30 @@ import { toast } from 'sonner';
 
 // Organization form validation schemas
 const organizationSchema = z.object({
-  company_name: z.string().min(1, 'Company name is required'),
-  company_code: z.string().min(1, 'Company code is required'),
-  business_license: z.string().optional(),
-  vat_registration: z.string().optional(),
-  address: z.string().optional(),
-  contact_email: z.string().email().optional().or(z.literal('')),
-  contact_phone: z.string().optional(),
-  website: z.string().url().optional().or(z.literal('')),
-  logo_img: z.string().url().optional().or(z.literal('')),
-  dark_logo_img: z.string().url().optional().or(z.literal('')),
-  lite_logo_img: z.string().url().optional().or(z.literal('')),
-  banner_img: z.string().url().optional().or(z.literal('')),
-  og_image: z.string().url().optional().or(z.literal('')),
-  favicon: z.string().url().optional().or(z.literal('')),
-  seo_title: z.string().optional(),
-  seo_description: z.string().optional(),
-  seo_keywords: z.string().optional(),
-  meta_description: z.string().optional(),
-  slug: z.string().optional(),
-  organization_type: z.string().min(1, 'Organization type is required'),
-  nid_document: z.string().url().optional().or(z.literal('')),
-  payment_report: z.string().url().optional().or(z.literal('')),
-  invoice_signature: z.string().url().optional().or(z.literal('')),
-  card_logo: z.string().url().optional().or(z.literal('')),
+   company_name: z.string().min(1, 'Company name is required'),
+   company_code: z.string().min(1, 'Company code is required'),
+   business_license: z.string().optional(),
+   vat_registration: z.string().optional(),
+   address: z.string().optional(),
+   contact_email: z.string().email().optional().or(z.literal('')),
+   contact_phone: z.string().optional(),
+   website: z.string().url().optional().or(z.literal('')),
+   logo_img: z.instanceof(File).optional().or(z.literal(undefined)),
+   dark_logo_img: z.instanceof(File).optional().or(z.literal(undefined)),
+   lite_logo_img: z.instanceof(File).optional().or(z.literal(undefined)),
+   banner_img: z.instanceof(File).optional().or(z.literal(undefined)),
+   og_image: z.instanceof(File).optional().or(z.literal(undefined)),
+   favicon: z.instanceof(File).optional().or(z.literal(undefined)),
+   seo_title: z.string().optional(),
+   seo_description: z.string().optional(),
+   seo_keywords: z.string().optional(),
+   meta_description: z.string().optional(),
+   slug: z.string().optional(),
+   organization_type: z.string().min(1, 'Organization type is required'),
+   nid_document: z.instanceof(File).optional().or(z.literal(undefined)),
+   payment_report: z.instanceof(File).optional().or(z.literal(undefined)),
+   invoice_signature: z.instanceof(File).optional().or(z.literal(undefined)),
+   card_logo: z.instanceof(File).optional().or(z.literal(undefined)),
   country: z.string().optional(),
   org_timezone: z.string().optional(),
   currency: z.string().optional(),
@@ -83,30 +83,30 @@ const syncSettingsSchema = z.object({
 });
 
 interface OrganizationFormData {
-  company_name: string;
-  company_code: string;
-  business_license?: string;
-  vat_registration?: string;
-  address?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  website?: string;
-  logo_img?: string;
-  dark_logo_img?: string;
-  lite_logo_img?: string;
-  banner_img?: string;
-  og_image?: string;
-  favicon?: string;
-  seo_title?: string;
-  seo_description?: string;
-  seo_keywords?: string;
-  meta_description?: string;
-  slug?: string;
-  organization_type: string;
-  nid_document?: string;
-  payment_report?: string;
-  invoice_signature?: string;
-  card_logo?: string;
+   company_name: string;
+   company_code: string;
+   business_license?: string;
+   vat_registration?: string;
+   address?: string;
+   contact_email?: string;
+   contact_phone?: string;
+   website?: string;
+   logo_img?: File;
+   dark_logo_img?: File;
+   lite_logo_img?: File;
+   banner_img?: File;
+   og_image?: File;
+   favicon?: File;
+   seo_title?: string;
+   seo_description?: string;
+   seo_keywords?: string;
+   meta_description?: string;
+   slug?: string;
+   organization_type: string;
+   nid_document?: File;
+   payment_report?: File;
+   invoice_signature?: File;
+   card_logo?: File;
   country?: string;
   org_timezone?: string;
   currency?: string;
@@ -158,6 +158,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationSchema),
     defaultValues: {
@@ -169,22 +170,12 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({
       contact_email: organization.contact_email || '',
       contact_phone: organization.contact_phone || '',
       website: organization.website || '',
-      logo_img: organization.logo_img || '',
-      dark_logo_img: organization.dark_logo_img || '',
-      lite_logo_img: organization.lite_logo_img || '',
-      banner_img: organization.banner_img || '',
-      og_image: organization.og_image || '',
-      favicon: organization.favicon || '',
       seo_title: organization.seo_title || '',
       seo_description: organization.seo_description || '',
       seo_keywords: organization.seo_keywords || '',
       meta_description: organization.meta_description || '',
       slug: organization.slug || '',
       organization_type: organization.organization_type,
-      nid_document: organization.nid_document || '',
-      payment_report: organization.payment_report || '',
-      invoice_signature: organization.invoice_signature || '',
-      card_logo: organization.card_logo || '',
       country: organization.country || '',
       org_timezone: organization.org_timezone || '',
       currency: organization.currency || '',
@@ -346,85 +337,245 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({
           disabled={loading}
         />
 
-        <Input
-          label="Logo Image URL"
-          {...register('logo_img')}
-          error={errors.logo_img?.message}
-          disabled={loading}
-          placeholder="https://example.com/logo.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Logo Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('logo_img', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.logo_img && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.logo_img}</p>
+          )}
+          {errors.logo_img && (
+            <p className="text-sm text-red-600 mt-1">{errors.logo_img.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Dark Logo Image URL"
-          {...register('dark_logo_img')}
-          error={errors.dark_logo_img?.message}
-          disabled={loading}
-          placeholder="https://example.com/dark-logo.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Dark Logo Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('dark_logo_img', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.dark_logo_img && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.dark_logo_img}</p>
+          )}
+          {errors.dark_logo_img && (
+            <p className="text-sm text-red-600 mt-1">{errors.dark_logo_img.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Lite Logo Image URL"
-          {...register('lite_logo_img')}
-          error={errors.lite_logo_img?.message}
-          disabled={loading}
-          placeholder="https://example.com/lite-logo.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Lite Logo Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('lite_logo_img', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.lite_logo_img && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.lite_logo_img}</p>
+          )}
+          {errors.lite_logo_img && (
+            <p className="text-sm text-red-600 mt-1">{errors.lite_logo_img.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Banner Image URL"
-          {...register('banner_img')}
-          error={errors.banner_img?.message}
-          disabled={loading}
-          placeholder="https://example.com/banner.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Banner Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('banner_img', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.banner_img && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.banner_img}</p>
+          )}
+          {errors.banner_img && (
+            <p className="text-sm text-red-600 mt-1">{errors.banner_img.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="OG Image URL"
-          {...register('og_image')}
-          error={errors.og_image?.message}
-          disabled={loading}
-          placeholder="https://example.com/og-image.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            OG Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('og_image', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.og_image && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.og_image}</p>
+          )}
+          {errors.og_image && (
+            <p className="text-sm text-red-600 mt-1">{errors.og_image.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Favicon URL"
-          {...register('favicon')}
-          error={errors.favicon?.message}
-          disabled={loading}
-          placeholder="https://example.com/favicon.ico"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Favicon
+          </label>
+          <input
+            type="file"
+            accept="image/*,.ico"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('favicon', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.favicon && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.favicon}</p>
+          )}
+          {errors.favicon && (
+            <p className="text-sm text-red-600 mt-1">{errors.favicon.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="NID Document URL"
-          {...register('nid_document')}
-          error={errors.nid_document?.message}
-          disabled={loading}
-          placeholder="https://example.com/nid.pdf"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            NID Document
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('nid_document', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.nid_document && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.nid_document}</p>
+          )}
+          {errors.nid_document && (
+            <p className="text-sm text-red-600 mt-1">{errors.nid_document.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Payment Report URL"
-          {...register('payment_report')}
-          error={errors.payment_report?.message}
-          disabled={loading}
-          placeholder="https://example.com/payment-report.pdf"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Payment Report
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('payment_report', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.payment_report && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.payment_report}</p>
+          )}
+          {errors.payment_report && (
+            <p className="text-sm text-red-600 mt-1">{errors.payment_report.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Invoice Signature URL"
-          {...register('invoice_signature')}
-          error={errors.invoice_signature?.message}
-          disabled={loading}
-          placeholder="https://example.com/signature.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Invoice Signature
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('invoice_signature', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.invoice_signature && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.invoice_signature}</p>
+          )}
+          {errors.invoice_signature && (
+            <p className="text-sm text-red-600 mt-1">{errors.invoice_signature.message}</p>
+          )}
+        </div>
 
-        <Input
-          label="Card Logo URL"
-          {...register('card_logo')}
-          error={errors.card_logo?.message}
-          disabled={loading}
-          placeholder="https://example.com/card-logo.png"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Card Logo
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setValue('card_logo', file);
+              }
+            }}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {organization.card_logo && (
+            <p className="text-sm text-gray-600 mt-1">Current: {organization.card_logo}</p>
+          )}
+          {errors.card_logo && (
+            <p className="text-sm text-red-600 mt-1">{errors.card_logo.message}</p>
+          )}
+        </div>
 
         <div className="md:col-span-2">
           <Input
@@ -876,7 +1027,40 @@ export const OrganizationSettings: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await organizationService.updateOrganization(organization.id, data);
+      // Check if any media files are provided
+      const hasFiles = Object.keys(data).some(key =>
+        ['logo_img', 'dark_logo_img', 'lite_logo_img', 'banner_img', 'og_image', 'favicon', 'nid_document', 'payment_report', 'invoice_signature', 'card_logo'].includes(key) &&
+        data[key as keyof OrganizationFormData] instanceof File
+      );
+
+      let submitData: any = data;
+
+      if (hasFiles) {
+        // Convert to FormData for file uploads
+        const formData = new FormData();
+
+        // Add non-file fields
+        Object.keys(data).forEach(key => {
+          const value = data[key as keyof OrganizationFormData];
+          if (!(value instanceof File)) {
+            if (value !== undefined && value !== null && value !== '') {
+              formData.append(key, value as string);
+            }
+          }
+        });
+
+        // Add file fields
+        ['logo_img', 'dark_logo_img', 'lite_logo_img', 'banner_img', 'og_image', 'favicon', 'nid_document', 'payment_report', 'invoice_signature', 'card_logo'].forEach(field => {
+          const file = data[field as keyof OrganizationFormData] as File | undefined;
+          if (file) {
+            formData.append(field, file);
+          }
+        });
+
+        submitData = formData;
+      }
+
+      await organizationService.updateOrganization(organization.id, submitData);
       await loadOrganization();
       toast.success('Organization settings updated successfully');
     } catch (error: any) {

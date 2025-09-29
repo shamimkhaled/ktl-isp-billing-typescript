@@ -172,12 +172,15 @@ export interface User {
   email: string;
   name: string;
   mobile: string;
-  user_type: 'super_admin' | 'admin' | 'billing_manager' | 'noc_manager' | 'support_staff' | 'reseller_admin' | 'sub_reseller_admin' | 'field_staff';
+  user_type: 'super_admin' | 'admin' | 'billing_manager' | 'noc_manager' | 'support_staff' | 'reseller_admin' | 'sub_reseller_admin' | 'field_staff' | 'accountant' | 'customer_service' | 'technical_support';
   employee_id?: string;
   designation?: string;
+  designation_info?: Designation;
   department?: string;
+  department_info?: Department;
   salary?: string;
   date_of_joining?: string;
+  date_of_birth?: string;
   address?: string;
   contact_person_name?: string;
   contact_person_phone?: string;
@@ -219,6 +222,7 @@ export interface UserCreate {
   department?: string;
   salary?: string;
   date_of_joining?: string;
+  date_of_birth?: string;
   address?: string;
   contact_person_name?: string;
   contact_person_phone?: string;
@@ -237,6 +241,7 @@ export interface UserUpdate {
   department?: string;
   salary?: string;
   date_of_joining?: string;
+  date_of_birth?: string;
   address?: string;
   contact_person_name?: string;
   contact_person_phone?: string;
@@ -314,4 +319,38 @@ export interface ThanaListResponse {
   next?: string;
   previous?: string;
   results: Thana[];
+}
+
+// Department Types
+export interface Department {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DepartmentListResponse {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Department[];
+}
+
+// Designation Types
+export interface Designation {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DesignationListResponse {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Designation[];
 }

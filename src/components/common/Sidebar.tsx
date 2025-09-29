@@ -10,6 +10,7 @@ import {
   Network,
   ChevronDown,
   ChevronRight,
+  X,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -93,7 +94,12 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
@@ -115,140 +121,165 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 backdrop-blur-xl bg-white/10 border-r border-white/20 shadow-2xl overflow-y-auto z-40">
-      <div className="p-4">
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const isItemActive = isActive(item.path) || isSubItemActive(item);
-            const isExpanded = expandedMenus[item.id];
-            const Icon = item.icon;
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
-            return (
-              <div key={item.id}>
-                {/* Main Menu Item */}
-                <div
-                  className={`group relative overflow-hidden rounded-2xl mt-5 transition-all duration-300 ${
-                    isItemActive
-                      ? 'bg-white/20 shadow-xl transform scale-[1.02]'
-                      : 'hover:bg-white/10 hover:transform hover:scale-[1.01]'
-                  }`}
-                >
-                  {/* Background gradient for active item */}
-                  {isItemActive && (
+      <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 lg:w-72 backdrop-blur-xl bg-white/10 border-r border-white/20 shadow-2xl z-40 transition-transform duration-300 ease-in-out flex flex-col ${
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
+        {/* Mobile Close Button */}
+        <div className="lg:hidden p-4 border-b border-white/20 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="p-2 backdrop-blur-md bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-300"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        {/* Scrollable Navigation Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <nav className="space-y-2">
+              {menuItems.map((item) => {
+                const isItemActive = isActive(item.path) || isSubItemActive(item);
+                const isExpanded = expandedMenus[item.id];
+                const Icon = item.icon;
+
+                return (
+                  <div key={item.id}>
+                    {/* Main Menu Item */}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-20 rounded-2xl`}
-                    />
-                  )}
-                  
-                  <div className="relative">
-                    {item.path ? (
-                      <Link
-                        to={item.path}
-                        className="flex items-center justify-between w-full p-4 text-left"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
-                              isItemActive
-                                ? `bg-gradient-to-br ${item.gradient} text-white`
-                                : 'bg-white/10 text-white/80 group-hover:bg-white/20'
-                            }`}
+                      className={`group relative overflow-hidden rounded-2xl mt-5 transition-all duration-300 ${
+                        isItemActive
+                          ? 'bg-white/20 shadow-xl transform scale-[1.02]'
+                          : 'hover:bg-white/10 hover:transform hover:scale-[1.01]'
+                      }`}
+                    >
+                      {/* Background gradient for active item */}
+                      {isItemActive && (
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-20 rounded-2xl`}
+                        />
+                      )}
+
+                      <div className="relative">
+                        {item.path ? (
+                          <Link
+                            to={item.path}
+                            className="flex items-center justify-between w-full p-4 text-left"
                           >
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <span
-                            className={`font-semibold transition-colors ${
-                              isItemActive ? 'text-white' : 'text-white/80 group-hover:text-white'
-                            }`}
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                        {item.subItems && (
+                            <div className="flex items-center space-x-4">
+                              <div
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
+                                  isItemActive
+                                    ? `bg-gradient-to-br ${item.gradient} text-white`
+                                    : 'bg-white/10 text-white/80 group-hover:bg-white/20'
+                                }`}
+                              >
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <span
+                                className={`font-semibold transition-colors ${
+                                  isItemActive ? 'text-white' : 'text-white/80 group-hover:text-white'
+                                }`}
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                            {item.subItems && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  toggleMenu(item.id);
+                                }}
+                                className="p-1 text-white/60 hover:text-white transition-colors"
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </Link>
+
+                        ) : (
                           <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toggleMenu(item.id);
-                            }}
-                            className="p-1 text-white/60 hover:text-white transition-colors"
+                            onClick={() => item.subItems && toggleMenu(item.id)}
+                            className="flex items-center justify-between w-full p-4 text-left"
                           >
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
+                            <div className="flex items-center space-x-4">
+                              <div
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
+                                  isItemActive
+                                    ? `bg-gradient-to-br ${item.gradient} text-white`
+                                    : 'bg-white/10 text-white/80 group-hover:bg-white/20'
+                                }`}
+                              >
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <span
+                                className={`font-semibold transition-colors ${
+                                  isItemActive ? 'text-white' : 'text-white/80 group-hover:text-white'
+                                }`}
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                            {item.subItems && (
+                              <div className="p-1 text-white/60 hover:text-white transition-colors">
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                              </div>
                             )}
                           </button>
                         )}
-                      </Link>
+                      </div>
+                    </div>
 
-                    ) : (
-                      <button
-                        onClick={() => item.subItems && toggleMenu(item.id)}
-                        className="flex items-center justify-between w-full p-4 text-left"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
-                              isItemActive
-                                ? `bg-gradient-to-br ${item.gradient} text-white`
-                                : 'bg-white/10 text-white/80 group-hover:bg-white/20'
+                    {/* Sub Menu Items */}
+                    {item.subItems && isExpanded && (
+                      <div className="ml-6 mt-2 space-y-1 overflow-hidden">
+                        {item.subItems.map((subItem) => (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            className={`block px-4 py-2 rounded-xl text-sm transition-all duration-200 ${
+                              isActive(subItem.path)
+                                ? 'bg-white/20 text-white font-medium shadow-lg'
+                                : 'text-white/70 hover:text-white hover:bg-white/10'
                             }`}
                           >
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <span
-                            className={`font-semibold transition-colors ${
-                              isItemActive ? 'text-white' : 'text-white/80 group-hover:text-white'
-                            }`}
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                        {item.subItems && (
-                          <div className="p-1 text-white/60 hover:text-white transition-colors">
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                          </div>
-                        )}
-                      </button>
+                            {subItem.label}
+                          </Link>
+                        ))}
+                      </div>
                     )}
                   </div>
-                </div>
-
-                {/* Sub Menu Items */}
-                {item.subItems && isExpanded && (
-                  <div className="ml-6 mt-2 space-y-1 overflow-hidden">
-                    {item.subItems.map((subItem) => (
-                      <Link
-                        key={subItem.path}
-                        to={subItem.path}
-                        className={`block px-4 py-2 rounded-xl text-sm transition-all duration-200 ${
-                          isActive(subItem.path)
-                            ? 'bg-white/20 text-white font-medium shadow-lg'
-                            : 'text-white/70 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {subItem.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/20 backdrop-blur-sm">
-        <div className="text-center text-white/50 text-xs">
-          <p>KTL ISP Billing Management System</p>
-          <p>v1.0.0</p>
+                );
+              })}
+            </nav>
+          </div>
         </div>
-      </div>
-    </aside>
+
+        {/* Fixed Footer */}
+        <div className="flex-shrink-0 p-4 border-t border-white/20 backdrop-blur-sm">
+          <div className="text-center text-white/50 text-xs">
+            <p>KTL ISP Billing Management System</p>
+            <p>v1.0.0</p>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 };

@@ -4,11 +4,12 @@ import { useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, User, Lock, Sparkles, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/common/Button';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { Card } from '../components/common/Card';
+import ktlLogo from '../assets/logo/ktl-logo.png';
 
 // Validation schema
 const loginSchema = z.object({
@@ -24,9 +25,9 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const Login: React.FC = () => {
- const { login, isAuthenticated, loading, error, clearError } = useAuth();
-   const [showPassword, setShowPassword] = useState(false);
-   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, isAuthenticated, loading, error, clearError } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
    const {
    register,
@@ -105,11 +106,13 @@ export const Login: React.FC = () => {
           <div>
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl mb-4 shadow-xl">
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
+              <img
+                src={ktlLogo}
+                alt="KTL ISP Logo"
+                className="w-18 h-16 rounded-2xl mb-4 shadow-xl object-contain mx-auto"
+              />
               <h1 className="text-3xl font-bold text-white mb-2">
-                Welcome to KTL ISP Billing Management
+                Welcome to KTL ISP Billing Management System
               </h1>
               <p className="text-white/70">
                 Sign in to your account to continue

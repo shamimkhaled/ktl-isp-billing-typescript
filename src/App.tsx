@@ -20,6 +20,7 @@ import { Sidebar } from './components/common/Sidebar';
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
 const UserManagement = lazy(() => import('./pages/UserManagement').then(module => ({ default: module.UserManagement })));
+const UserProfile = lazy(() => import('./pages/UserProfile').then(module => ({ default: module.UserProfile })));
 const RoleManagement = lazy(() => import('./pages/RoleManagement').then(module => ({ default: module.RoleManagement })));
 const PermissionManagement = lazy(() => import('./pages/PermissionManagement').then(module => ({ default: module.PermissionManagement })));
 const OrganizationSettings = lazy(() => import('./pages/OrganizationSettings').then(module => ({ default: module.OrganizationSettings })));
@@ -81,13 +82,18 @@ const ProtectedRoute = memo<ProtectedRouteProps>(({ children }) => {
 
 // Layout Component for authenticated pages - Memoized for performance
 const Layout = memo<React.PropsWithChildren>(({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
-      <Header />
+      <Header onToggleSidebar={toggleSidebar} />
       <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6 ml-64 mt-16">
-          <div className="max-w-7xl mx-auto">
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+        <main className="flex-1 transition-all duration-300 mt-16 lg:ml-72">
+          <div className="p-4 sm:p-6 max-w-7xl mx-auto">
             {children}
           </div>
         </main>
@@ -154,6 +160,14 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <UserManagement />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Layout>
+                <UserProfile />
               </Layout>
             </ProtectedRoute>
           } />

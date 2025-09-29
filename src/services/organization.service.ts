@@ -21,8 +21,8 @@ export class OrganizationService {
     return apiService.post('/organization/', orgData);
   }
 
-  async updateOrganization(id: string, orgData: Partial<Omit<Organization, 'id' | 'created_at' | 'updated_at'>>): Promise<Organization> {
-    return apiService.put(`/organization/${id}/`, orgData);
+  async updateOrganization(id: string, orgData: Partial<Omit<Organization, 'id' | 'created_at' | 'updated_at'>> | FormData): Promise<Organization> {
+    return apiService.patch(`/organization/${id}/`, orgData);
   }
 
   async partialUpdateOrganization(id: string, orgData: Partial<Omit<Organization, 'id' | 'created_at' | 'updated_at'>>): Promise<Organization> {
