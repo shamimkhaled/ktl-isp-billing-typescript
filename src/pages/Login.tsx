@@ -109,6 +109,10 @@ export const Login: React.FC = () => {
               <img
                 src={ktlLogo}
                 alt="KTL ISP Logo"
+                loading = "eager"
+                decoding='async'
+                width={64}
+                height={64}
                 className="w-18 h-16 rounded-2xl mb-4 shadow-xl object-contain mx-auto"
               />
               <h1 className="text-3xl font-bold text-white mb-2">
