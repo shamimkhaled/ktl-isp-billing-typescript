@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   Bell,
@@ -10,7 +10,8 @@ import {
   ChevronDown,
   Menu
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { logout } from '../../store/authSlice';
 import { capitalizeFirst } from '../../utils/helpers';
 import ktlLogo from '../../assets/logo/ktl-logo.png';
 
@@ -19,21 +20,35 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
-  const { user, logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { user } = useAppSelector((state) => state.auth);
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns when clicking outside
+  // ✅ Safe outside-click handler that supports portals
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      // Notifications dropdown close
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
         setShowNotifications(false);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+
+      // User menu dropdown close (check both ref + portal)
+      const userMenuPortal = document.querySelector('#user-menu-portal');
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(target) &&
+        userMenuPortal &&
+        !userMenuPortal.contains(target)
+      ) {
         setShowUserMenu(false);
       }
     };
@@ -42,11 +57,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await logout();
+      setShowUserMenu(false);
+      navigate('/login', { replace: true });
+
+      setTimeout(() => {
+        dispatch(logout());
+      }, 50);
     } catch (error) {
-      console.error('Logout error:', error);
+      window.location.href = '/login';
     }
   };
 
@@ -59,9 +79,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/10 border-b border-white/20 shadow-2xl">
       <div className="flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4">
-        {/* Left Section - Menu Button, Logo and Search */}
+        {/* Left Section */}
         <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 flex-1 min-w-0">
-          {/* Mobile Menu Button */}
+          {/* Sidebar Toggle */}
           <button
             onClick={onToggleSidebar}
             className="lg:hidden p-2 sm:p-3 backdrop-blur-md bg-white/10 border border-white/20 rounded-xl shadow-xl hover:bg-white/20 transition-all duration-300 flex-shrink-0"
@@ -69,12 +89,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </button>
 
-          {/* Logo and Brand */}
+          {/* Logo */}
           <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             <img
               src={ktlLogo}
               alt="KTL ISP Logo"
               className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-contain rounded-lg sm:rounded-xl shadow-lg"
+              loading="eager"
+              decoding="async"
+              width="64"
+              height="64"
             />
             <div className="hidden sm:block min-w-0">
               <h1 className="text-lg sm:text-xl font-bold text-white truncate">
@@ -86,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             </div>
           </div>
 
-          {/* Search Bar - Hidden on very small screens, visible on larger screens */}
+          {/* Search Bar */}
           <div className="hidden lg:block flex-1 max-w-xs xl:max-w-sm">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
@@ -101,9 +125,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           </div>
         </div>
 
-        {/* Right Section - Notifications and User Menu */}
+        {/* Right Section */}
         <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 flex-shrink-0">
-          {/* Search Button for Mobile */}
+          {/* Mobile Search */}
           <button className="lg:hidden p-2 sm:p-3 backdrop-blur-md bg-white/10 border border-white/20 rounded-xl shadow-xl hover:bg-white/20 transition-all duration-300">
             <Search className="w-4 h-4 text-white" />
           </button>
@@ -122,37 +146,44 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               )}
             </button>
 
-            {/* Notifications Dropdown - Responsive positioning */}
-            {showNotifications && createPortal(
-              <div className="fixed inset-0 z-[9999] flex items-start justify-end pt-16 sm:pt-20 pr-2 sm:pr-4 lg:pr-6">
-                <div className="w-full sm:w-80 max-w-sm backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 mx-2 sm:mx-0">
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-white">Notifications</h3>
-                    <span className="text-xs text-white/60 bg-blue-500/30 px-2 py-1 rounded-full">
-                      {mockNotifications.length} new
-                    </span>
+            {/* Notifications Dropdown */}
+            {showNotifications &&
+              createPortal(
+                <div
+                  className="fixed inset-0 z-[9999] flex items-start justify-end pt-16 sm:pt-20 pr-2 sm:pr-4 lg:pr-6"
+                  onClick={() => setShowNotifications(false)}
+                >
+                  <div
+                    className="w-full sm:w-80 max-w-sm backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 mx-2 sm:mx-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                      <h3 className="text-base sm:text-lg font-semibold text-white">Notifications</h3>
+                      <span className="text-xs text-white/60 bg-blue-500/30 px-2 py-1 rounded-full">
+                        {mockNotifications.length} new
+                      </span>
+                    </div>
+                    <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto">
+                      {mockNotifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className="p-2 sm:p-3 bg-white/10 rounded-lg sm:rounded-xl cursor-pointer hover:bg-white/20 transition-colors"
+                        >
+                          <h4 className="text-sm font-medium text-white">{notification.title}</h4>
+                          <p className="text-xs text-white/70 mt-1">{notification.message}</p>
+                          <p className="text-xs text-white/50 mt-2">{notification.time}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 sm:mt-4 pt-3 border-t border-white/20">
+                      <button className="w-full text-center text-sm text-blue-300 hover:text-blue-200 transition-colors">
+                        View all notifications
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto">
-                    {mockNotifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className="p-2 sm:p-3 bg-white/10 rounded-lg sm:rounded-xl cursor-pointer hover:bg-white/20 transition-colors"
-                      >
-                        <h4 className="text-sm font-medium text-white">{notification.title}</h4>
-                        <p className="text-xs text-white/70 mt-1">{notification.message}</p>
-                        <p className="text-xs text-white/50 mt-2">{notification.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 sm:mt-4 pt-3 border-t border-white/20">
-                    <button className="w-full text-center text-sm text-blue-300 hover:text-blue-200 transition-colors">
-                      View all notifications
-                    </button>
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )}
+                </div>,
+                document.body
+              )}
           </div>
 
           {/* User Menu */}
@@ -162,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               className="flex items-center space-x-2 sm:space-x-3 backdrop-blur-md bg-white/10 border border-white/20 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 rounded-xl shadow-xl hover:bg-white/20 transition-all duration-300"
             >
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-400 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
-                <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                <User className="w-3 h-3 sm:w-4 h-4 text-white" />
               </div>
               <div className="text-left hidden md:block min-w-0">
                 <span className="text-white font-semibold block text-xs sm:text-sm truncate max-w-20 lg:max-w-32">
@@ -176,44 +207,52 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-white/60" />
             </button>
 
-            {/* User Dropdown - Responsive positioning */}
-            {showUserMenu && createPortal(
-              <div className="fixed inset-0 z-[9999] flex items-start justify-end pt-16 sm:pt-20 pr-2 sm:pr-4 lg:pr-6">
-                <div className="w-full sm:w-64 max-w-sm backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 mx-2 sm:mx-0">
-                  <div className="space-y-2">
-                    <div className="px-3 py-2 border-b border-white/20 mb-3">
-                      <p className="text-white font-medium text-sm sm:text-base truncate">{user?.name || user?.login_id}</p>
-                      <p className="text-xs text-white/60 truncate">{user?.email || 'No email'}</p>
-                    </div>
+            {/* ✅ User Dropdown with portal ID */}
+            {showUserMenu &&
+              createPortal(
+                <div
+                  id="user-menu-portal"
+                  className="fixed inset-0 z-[9999] flex items-start justify-end pt-16 sm:pt-20 pr-2 sm:pr-4 lg:pr-6"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <div
+                    className="w-full sm:w-64 max-w-sm backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 mx-2 sm:mx-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="space-y-2">
+                      <div className="px-3 py-2 border-b border-white/20 mb-3">
+                        <p className="text-white font-medium text-sm sm:text-base truncate">{user?.name || user?.login_id}</p>
+                        <p className="text-xs text-white/60 truncate">{user?.email || 'No email'}</p>
+                      </div>
 
-                    <Link
-                      to="/profile"
-                      onClick={() => setShowUserMenu(false)}
-                      className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-white/10 rounded-xl transition-colors text-white"
-                    >
-                      <User className="w-4 h-4 text-white/70" />
-                      <span className="text-sm">Profile</span>
-                    </Link>
-
-                    <button className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-white/10 rounded-xl transition-colors text-white">
-                      <Settings className="w-4 h-4 text-white/70" />
-                      <span className="text-sm">Settings</span>
-                    </button>
-
-                    <div className="border-t border-white/20 pt-2 mt-2">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-red-500/20 rounded-xl transition-colors text-red-300"
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-white/10 rounded-xl transition-colors text-white"
                       >
-                        <LogOut className="w-4 h-4" />
-                        <span className="text-sm">Sign Out</span>
+                        <User className="w-4 h-4 text-white/70" />
+                        <span className="text-sm">Profile</span>
+                      </Link>
+
+                      <button className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-white/10 rounded-xl transition-colors text-white">
+                        <Settings className="w-4 h-4 text-white/70" />
+                        <span className="text-sm">Settings</span>
                       </button>
+
+                      <div className="border-t border-white/20 pt-2 mt-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-red-500/20 rounded-xl transition-colors text-red-300"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span className="text-sm">Sign Out</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>,
-              document.body
-            )}
+                </div>,
+                document.body
+              )}
           </div>
         </div>
       </div>
