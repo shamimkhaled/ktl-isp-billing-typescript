@@ -4,11 +4,13 @@ import type { TypedUseSelectorHook } from 'react-redux';
 
 import authSlice from './authSlice';
 import userSlice from './userSlice';
+import themeSlice from './themeSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authSlice,
     user: userSlice,
+    theme: themeSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

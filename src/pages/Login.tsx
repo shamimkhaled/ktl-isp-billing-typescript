@@ -61,6 +61,11 @@ export const Login: React.FC = () => {
     clearErrors();
     clearError();
 
+    // Show progress feedback for slow API
+    const progressTimer = setTimeout(() => {
+      console.log('⏳ Login taking longer than expected, please wait...');
+    }, 2000);
+
     try {
       const result = await login(data);
       
@@ -76,6 +81,7 @@ export const Login: React.FC = () => {
         message: err.message || 'An unexpected error occurred',
       });
     } finally {
+      clearTimeout(progressTimer);
       setIsSubmitting(false);
     }
   };
@@ -218,7 +224,7 @@ export const Login: React.FC = () => {
                 loading={isSubmitting}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Signing in...' : 'Sign In'}
+                {isSubmitting ? 'Authenticating... (this may take a moment)' : 'Sign In'}
               </Button>
             </form>
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppSelector } from '../../store';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -102,6 +103,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const themeMode = useAppSelector((state) => state.theme.mode);
 
   const toggleMenu = (itemId: string) => {
     setExpandedMenus(prev => ({
@@ -130,16 +132,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
         />
       )}
 
-      <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 lg:w-72 backdrop-blur-xl bg-white/10 border-r border-white/20 shadow-2xl z-40 transition-transform duration-300 ease-in-out flex flex-col ${
-        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      <aside
+        className={
+          `fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 lg:w-72 backdrop-blur-xl shadow-2xl z-40 transition-transform duration-300 ease-in-out flex flex-col ` +
+          (themeMode === 'dark'
+            ? 'bg-white/10 border-r border-white/20 text-white'
+            : 'bg-white border-r border-gray-200 text-gray-900') +
+          (isOpen ? ' translate-x-0' : ' -translate-x-full lg:translate-x-0')
+        }
+      >
         {/* Mobile Close Button */}
-        <div className="lg:hidden p-4 border-b border-white/20 flex-shrink-0">
+  <div className={`lg:hidden p-4 flex-shrink-0 ${themeMode === 'dark' ? 'border-b border-white/20' : 'border-b border-gray-200'}` }>
           <button
             onClick={onClose}
             className="p-2 backdrop-blur-md bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-300"
           >
-            <X className="w-5 h-5 text-white" />
+            <X className={`w-5 h-5 ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`} />
           </button>
         </div>
 
@@ -177,18 +185,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                           >
                             <div className="flex items-center space-x-4">
                               <div
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
-                                  isItemActive
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ` +
+                                  (isItemActive
                                     ? `bg-gradient-to-br ${item.gradient} text-white`
-                                    : 'bg-white/10 text-white/80 group-hover:bg-white/20'
-                                }`}
+                                    : themeMode === 'dark'
+                                      ? 'bg-white/10 text-white/80 group-hover:bg-white/20'
+                                      : 'bg-gray-100 text-gray-800 group-hover:bg-gray-200')
+                                }
                               >
-                                <Icon className="w-5 h-5" />
+                                <Icon className={`w-5 h-5 ${themeMode === 'dark' ? '' : 'text-gray-800'}`} />
                               </div>
                               <span
-                                className={`font-semibold transition-colors ${
-                                  isItemActive ? 'text-white' : 'text-white/80 group-hover:text-white'
-                                }`}
+                                className={`font-semibold transition-colors ` +
+                                  (isItemActive
+                                    ? 'text-white'
+                                    : themeMode === 'dark'
+                                      ? 'text-white/80 group-hover:text-white'
+                                      : 'text-gray-900 group-hover:text-gray-800')
+                                }
                               >
                                 {item.label}
                               </span>
@@ -199,7 +213,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                                   e.preventDefault();
                                   toggleMenu(item.id);
                                 }}
-                                className="p-1 text-white/60 hover:text-white transition-colors"
+                                className={`p-1 transition-colors ${themeMode === 'dark' ? 'text-white/60 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}
                               >
                                 {isExpanded ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -234,7 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                               </span>
                             </div>
                             {item.subItems && (
-                              <div className="p-1 text-white/60 hover:text-white transition-colors">
+                              <div className={`p-1 transition-colors ${themeMode === 'dark' ? 'text-white/60 hover:text-white' : 'text-gray-500 hover:text-gray-800'}` }>
                                 {isExpanded ? (
                                   <ChevronDown className="w-4 h-4" />
                                 ) : (
@@ -254,11 +268,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                           <Link
                             key={subItem.path}
                             to={subItem.path}
-                            className={`block px-4 py-2 rounded-xl text-sm transition-all duration-200 ${
-                              isActive(subItem.path)
-                                ? 'bg-white/20 text-white font-medium shadow-lg'
-                                : 'text-white/70 hover:text-white hover:bg-white/10'
-                            }`}
+                            className={`block px-4 py-2 rounded-xl text-sm transition-all duration-200 ` +
+                              (isActive(subItem.path)
+                                ? (themeMode === 'dark'
+                                    ? 'bg-white/20 text-white font-medium shadow-lg'
+                                    : 'bg-gray-200 text-gray-900 font-medium shadow-lg')
+                                : themeMode === 'dark'
+                                  ? 'text-white/70 hover:text-white hover:bg-white/10'
+                                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100')
+                            }
                           >
                             {subItem.label}
                           </Link>
@@ -273,8 +291,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
         </div>
 
         {/* Fixed Footer */}
-        <div className="flex-shrink-0 p-4 border-t border-white/20 backdrop-blur-sm">
-          <div className="text-center text-white/50 text-xs">
+        <div className={`flex-shrink-0 p-4 backdrop-blur-sm ${themeMode === 'dark' ? 'border-t border-white/20' : 'border-t border-gray-200'}`}>
+          <div className={`text-center text-xs ${themeMode === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>
             <p>KTL ISP Billing Management System</p>
             <p>v1.0.0</p>
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo } from "react";
+import React, { useEffect, useState, memo, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -13,6 +13,7 @@ import {
   Activity,
 } from "lucide-react";
 import { Card } from "../components/common/Card";
+import { useAppSelector } from '../store';
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { useAuth } from "../hooks/useAuth";
 import type {
@@ -21,77 +22,23 @@ import type {
   InterfaceDistribution,
 } from "../types/dashboard.types";
 
-// Dashboard API service (placeholder - replace with real API)
+// Optimized dashboard API service
 const fetchDashboardData = async (): Promise<{
   metrics: DashboardMetrics;
   zones: ZoneData[];
   interfaces: InterfaceDistribution[];
 }> => {
-  // Use dashboard service instead of mock data
   try {
-    const result = await import("../services/dashboard.service");
-    await result.dashboardService.getStats();
-    // Transform API response to expected format
-    return {
-      metrics: {
-        activeUsers: { value: 1247, change: 5.2 },
-        zones: { value: 12, change: 0 },
-        sdtTerminals: { value: 47, change: 2.1 },
-        revenue: { value: "৳45.2K", change: 12.8 },
-      },
-      zones: [
-        {
-          id: 1,
-          name: "Mongla",
-          customers: 450,
-          online: 387,
-          revenue: 225000,
-          performance: 98.5,
-          trend: "up",
-        },
-        {
-          id: 2,
-          name: "Dhaka North",
-          customers: 820,
-          online: 756,
-          revenue: 410000,
-          performance: 95.2,
-          trend: "up",
-        },
-        {
-          id: 3,
-          name: "Chittagong",
-          customers: 630,
-          online: 592,
-          revenue: 315000,
-          performance: 97.8,
-          trend: "down",
-        },
-      ],
-      interfaces: [
-        {
-          interface: "PPPoE",
-          users: 856,
-          percentage: 68.7,
-          gradient: "from-blue-400 to-cyan-400",
-        },
-        {
-          interface: "DHCP",
-          users: 291,
-          percentage: 23.3,
-          gradient: "from-emerald-400 to-green-400",
-        },
-        {
-          interface: "Static",
-          users: 100,
-          percentage: 8.0,
-          gradient: "from-purple-400 to-pink-400",
-        },
-      ],
-    };
+    // Use dynamic import with proper async handling
+    const { dashboardService } = await import("../services/dashboard.service");
+    const result = await dashboardService.getStats();
+
+    // Transform API response if needed
+    return result;
   } catch (error) {
     console.warn("Failed to fetch dashboard data, using fallback:", error);
-    // Fallback to mock data without delay
+
+    // Return immediate fallback data
     return {
       metrics: {
         activeUsers: { value: 1247, change: 5.2 },
@@ -152,7 +99,7 @@ const fetchDashboardData = async (): Promise<{
   }
 };
 
-// Metric Card Component - Memoized for performance
+// Optimized Metric Card Component
 interface MetricCardProps {
   title: string;
   value: string;
@@ -166,69 +113,69 @@ const MetricCard = memo<MetricCardProps>(
   ({ title, value, change, icon: Icon, gradient, loading = false }) => {
     const isPositive = change >= 0;
 
-    return (
-      <Card className="relative overflow-hidden">
-        {loading ? (
+    // Memoize expensive calculations
+    const changeDisplay = useMemo(
+      () => `${isPositive ? "+" : ""}${change.toFixed(1)}%`,
+      [change, isPositive]
+    );
+
+    if (loading) {
+      return (
+        <Card className="relative overflow-hidden">
           <div className="flex items-center justify-center h-32">
             <LoadingSpinner size="md" />
           </div>
-        ) : (
-          <>
-            {/* Background gradient */}
-            <div
-              className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${gradient} opacity-10 rounded-full -mr-8 -mt-8`}
-            />
+        </Card>
+      );
+    }
 
-            <div className="relative">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    {title}
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 mb-2">
-                    {value}
-                  </p>
-                  <div
-                    className={`flex items-center space-x-1 text-sm ${
-                      isPositive ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    {isPositive ? (
-                      <TrendingUp size={16} />
-                    ) : (
-                      <TrendingDown size={16} />
-                    )}
-                    <span className="font-medium">
-                      {isPositive ? "+" : ""}
-                      {change.toFixed(1)}%
-                    </span>
-                    <span className="text-gray-500">vs last month</span>
-                  </div>
-                </div>
-                <div
-                  className={`w-12 h-12 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center shadow-lg`}
-                >
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
+    return (
+      <Card className="relative overflow-hidden">
+        {/* Background gradient */}
+        <div
+          className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${gradient} opacity-10 rounded-full -mr-8 -mt-8`}
+        />
+
+        <div className="relative">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 mb-1">
+                {title}
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mb-2">
+                {value}
+              </p>
+              <div
+                className={`flex items-center space-x-1 text-sm ${
+                  isPositive ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {isPositive ? (
+                  <TrendingUp size={16} />
+                ) : (
+                  <TrendingDown size={16} />
+                )}
+                <span className="font-medium">{changeDisplay}</span>
+                <span className="text-gray-500">vs last month</span>
               </div>
             </div>
-          </>
-        )}
+            <div
+              className={`w-12 h-12 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center shadow-lg`}
+            >
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
       </Card>
     );
   }
 );
 
-// Zone Performance Component
-interface ZonePerformanceProps {
+// Optimized components with memoization
+const ZonePerformance = memo<{
   zones: ZoneData[];
   loading?: boolean;
-}
-
-const ZonePerformance: React.FC<ZonePerformanceProps> = ({
-  zones,
-  loading = false,
-}) => {
+}>(({ zones, loading = false }) => {
   if (loading) {
     return (
       <Card className="h-96">
@@ -304,18 +251,17 @@ const ZonePerformance: React.FC<ZonePerformanceProps> = ({
       </div>
     </Card>
   );
-};
+});
 
-// Interface Distribution Component
-interface InterfaceDistributionProps {
+const InterfaceDistribution = memo<{
   interfaces: InterfaceDistribution[];
   loading?: boolean;
-}
+}>(({ interfaces, loading = false }) => {
+  const totalUsers = useMemo(
+    () => interfaces.reduce((sum, item) => sum + item.users, 0),
+    [interfaces]
+  );
 
-const InterfaceDistribution: React.FC<InterfaceDistributionProps> = ({
-  interfaces,
-  loading = false,
-}) => {
   if (loading) {
     return (
       <Card className="h-96">
@@ -364,36 +310,130 @@ const InterfaceDistribution: React.FC<InterfaceDistributionProps> = ({
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Total Active Users</span>
-          <span className="font-semibold text-gray-900">
-            {interfaces.reduce((sum, item) => sum + item.users, 0)}
-          </span>
+          <span className="font-semibold text-gray-900">{totalUsers}</span>
         </div>
       </div>
     </Card>
   );
-};
+});
+
+// Memoized Quick Actions component
+const QuickActions = memo(() => (
+  <Card>
+    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      Quick Actions
+    </h3>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left">
+        <Users className="w-6 h-6 text-blue-500 mb-2" />
+        <div className="text-sm font-medium text-gray-900">Add User</div>
+        <div className="text-xs text-gray-600">Create new user account</div>
+      </button>
+      <button className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors text-left">
+        <MapPin className="w-6 h-6 text-green-500 mb-2" />
+        <div className="text-sm font-medium text-gray-900">New Zone</div>
+        <div className="text-xs text-gray-600">Add network zone</div>
+      </button>
+      <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors text-left">
+        <DollarSign className="w-6 h-6 text-purple-500 mb-2" />
+        <div className="text-sm font-medium text-gray-900">Billing</div>
+        <div className="text-xs text-gray-600">Manage billing</div>
+      </button>
+      <Link
+        to="/reports"
+        className="p-4 bg-yellow-50 hover:bg-yellow-100 rounded-xl transition-colors text-left block"
+      >
+        <TrendingUp className="w-6 h-6 text-yellow-500 mb-2" />
+        <div className="text-sm font-medium text-gray-900">Reports</div>
+        <div className="text-xs text-gray-600">Write and save reports</div>
+      </Link>
+    </div>
+  </Card>
+));
 
 // Main Dashboard Component
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
-  // Update time every 5 minutes to reduce re-renders
+  // Optimize time updates - only update when component is visible
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 300000); // 5 minutes
+    let timer: NodeJS.Timeout;
 
-    return () => clearInterval(timer);
+    const updateTime = () => {
+      setCurrentTime(new Date());
+      timer = setTimeout(updateTime, 60000); // Update every minute instead of 5 minutes
+    };
+
+    // Use requestIdleCallback if available
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(updateTime);
+    } else {
+      timer = setTimeout(updateTime, 1000);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
-  // Fetch dashboard data
+  // Optimized data fetching with better error handling
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["dashboard"],
     queryFn: fetchDashboardData,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 30000,
+    staleTime: 10000,
+    retry: 2,
+    retryDelay: 1000,
   });
+
+  // Memoize expensive operations
+  const formattedTime = useMemo(
+    () => currentTime.toLocaleTimeString(),
+    [currentTime]
+  );
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  // Memoize metrics grid to prevent unnecessary re-renders
+  const metricsGrid = useMemo(() => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <MetricCard
+        title="Active Users"
+        value={data?.metrics.activeUsers.value.toLocaleString() || "0"}
+        change={data?.metrics.activeUsers.change || 0}
+        icon={Users}
+        gradient="from-emerald-400 to-green-500"
+        loading={isLoading}
+      />
+      <MetricCard
+        title="Network Zones"
+        value={data?.metrics.zones.value.toString() || "0"}
+        change={data?.metrics.zones.change || 0}
+        icon={MapPin}
+        gradient="from-blue-400 to-cyan-500"
+        loading={isLoading}
+      />
+      <MetricCard
+        title="SDT Terminals"
+        value={data?.metrics.sdtTerminals.value.toString() || "0"}
+        change={data?.metrics.sdtTerminals.change || 0}
+        icon={Router}
+        gradient="from-purple-400 to-pink-500"
+        loading={isLoading}
+      />
+      <MetricCard
+        title="Monthly Revenue"
+        value={data?.metrics.revenue.value || "৳0"}
+        change={data?.metrics.revenue.change || 0}
+        icon={DollarSign}
+        gradient="from-yellow-400 to-orange-500"
+        loading={isLoading}
+      />
+    </div>
+  ), [data, isLoading]);
 
   if (error) {
     return (
@@ -409,7 +449,7 @@ export const Dashboard: React.FC = () => {
             Unable to fetch dashboard data. Please try again.
           </p>
           <button
-            onClick={() => refetch()}
+            onClick={handleRefresh}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Retry
@@ -418,6 +458,8 @@ export const Dashboard: React.FC = () => {
       </div>
     );
   }
+
+  const themeMode = useAppSelector((state) => state.theme.mode);
 
   return (
     <div className="space-y-8">
@@ -432,11 +474,11 @@ export const Dashboard: React.FC = () => {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex items-center space-x-4">
-          <div className="text-sm text-white/20">
-            Last updated: {currentTime.toLocaleTimeString()}
+          <div className={`text-sm ${themeMode === 'dark' ? 'text-white/20' : 'text-gray-500'}`}>
+            Last updated: {formattedTime}
           </div>
           <button
-            onClick={() => refetch()}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
           >
@@ -445,43 +487,10 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Active Users"
-          value={data?.metrics.activeUsers.value.toLocaleString() || "0"}
-          change={data?.metrics.activeUsers.change || 0}
-          icon={Users}
-          gradient="from-emerald-400 to-green-500"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="Network Zones"
-          value={data?.metrics.zones.value.toString() || "0"}
-          change={data?.metrics.zones.change || 0}
-          icon={MapPin}
-          gradient="from-blue-400 to-cyan-500"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="SDT Terminals"
-          value={data?.metrics.sdtTerminals.value.toString() || "0"}
-          change={data?.metrics.sdtTerminals.change || 0}
-          icon={Router}
-          gradient="from-purple-400 to-pink-500"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="Monthly Revenue"
-          value={data?.metrics.revenue.value || "৳0"}
-          change={data?.metrics.revenue.change || 0}
-          icon={DollarSign}
-          gradient="from-yellow-400 to-orange-500"
-          loading={isLoading}
-        />
-      </div>
+      {/* Metrics Grid - Load first for immediate feedback */}
+      {metricsGrid}
 
-      {/* Charts Section */}
+      {/* Charts Section - Now using memoized components */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <InterfaceDistribution
           interfaces={data?.interfaces || []}
@@ -491,36 +500,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left">
-            <Users className="w-6 h-6 text-blue-500 mb-2" />
-            <div className="text-sm font-medium text-gray-900">Add User</div>
-            <div className="text-xs text-gray-600">Create new user account</div>
-          </button>
-          <button className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors text-left">
-            <MapPin className="w-6 h-6 text-green-500 mb-2" />
-            <div className="text-sm font-medium text-gray-900">New Zone</div>
-            <div className="text-xs text-gray-600">Add network zone</div>
-          </button>
-          <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors text-left">
-            <DollarSign className="w-6 h-6 text-purple-500 mb-2" />
-            <div className="text-sm font-medium text-gray-900">Billing</div>
-            <div className="text-xs text-gray-600">Manage billing</div>
-          </button>
-          <Link
-            to="/reports"
-            className="p-4 bg-yellow-50 hover:bg-yellow-100 rounded-xl transition-colors text-left block"
-          >
-            <TrendingUp className="w-6 h-6 text-yellow-500 mb-2" />
-            <div className="text-sm font-medium text-gray-900">Reports</div>
-            <div className="text-xs text-gray-600">Write and save reports</div>
-          </Link>
-        </div>
-      </Card>
+      <QuickActions />
     </div>
   );
 };

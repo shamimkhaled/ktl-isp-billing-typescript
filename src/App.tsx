@@ -10,6 +10,7 @@ import { updateTokens, logout } from "./store/authSlice";
 import { apiService } from "./services/api";
 import { LoadingSpinner } from "./components/common/LoadingSpinner";
 import { Header } from "./components/common/Header";
+import { useAppSelector } from "./store";
 import { Sidebar } from "./components/common/Sidebar";
 
 const Login = lazy(() => import("./pages/Login").then(m => ({ default: m.Login })));
@@ -29,8 +30,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = memo(({ children
 const Layout: React.FC<{ children: React.ReactNode }> = memo(({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const themeMode = useAppSelector((s) => s.theme.mode);
+
+  const containerClass = themeMode === 'dark'
+    ? 'min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900'
+    : 'min-h-screen bg-white';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+    <div className={containerClass}>
       <Header onToggleSidebar={toggleSidebar} />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
