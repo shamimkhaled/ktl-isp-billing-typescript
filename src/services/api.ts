@@ -98,7 +98,7 @@ class ApiService {
 
         // Optimize timeout for different request types
         if (config.url?.includes("/auth/")) {
-          config.timeout = 10000; // 10 seconds for auth requests (API takes ~4s + buffer)
+          config.timeout = 30000; // 30 seconds for auth requests (backend is slow, needs more time)
         } else if (config.method?.toLowerCase() === "get") {
           config.timeout = 15000; // 15 seconds for GET requests
         } else {
@@ -179,7 +179,7 @@ class ApiService {
                 refresh_token: refreshToken,
               },
               {
-                timeout: 10000, // 10 second timeout for refresh
+                timeout: 30000, // 30 second timeout for refresh (matches auth timeout)
                 baseURL: import.meta.env.DEV
                   ? window.location.origin
                   : undefined, // Use proxy in dev

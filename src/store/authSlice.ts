@@ -1,7 +1,7 @@
 // src/store/authSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '../services/auth.service';
-import type { LoginCredentials, AuthResponse } from '../types/auth.types';
+import type { LoginCredentials, LoginResponse } from '../types/auth.types';
 import type { User } from '../types/user.types';
 
 interface AuthState {
@@ -77,7 +77,7 @@ const initialState: AuthState = getInitialAuthState();
 /**
  * Async login
  */
-export const loginAsync = createAsyncThunk<AuthResponse, LoginCredentials>(
+export const loginAsync = createAsyncThunk<LoginResponse, LoginCredentials>(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     console.time('⚡ loginAsync total');
@@ -132,7 +132,7 @@ const authSlice = createSlice({
     /**
      * Update tokens (for token refresh)
      */
-    updateTokens: (state, action: PayloadAction<{ access: string; refresh: string }>) => {
+    updateTokens: (_state, action: PayloadAction<{ access: string; refresh: string }>) => {
       authStorage.updateTokens(action.payload);
     },
 
@@ -146,7 +146,7 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginAsync.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+      .addCase(loginAsync.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
         state.loading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;

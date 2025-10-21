@@ -28,6 +28,7 @@ export const Login: React.FC = () => {
   const { login, isAuthenticated, loading, error, clearError } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [slowResponseWarning, setSlowResponseWarning] = useState(false);
 
    const {
    register,
@@ -58,13 +59,15 @@ export const Login: React.FC = () => {
 
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
     setIsSubmitting(true);
+    setSlowResponseWarning(false);
     clearErrors();
     clearError();
 
     // Show progress feedback for slow API
     const progressTimer = setTimeout(() => {
+      setSlowResponseWarning(true);
       console.log('⏳ Login taking longer than expected, please wait...');
-    }, 2000);
+    }, 5000); // Show warning after 5 seconds
 
     try {
       const result = await login(data);
@@ -82,6 +85,7 @@ export const Login: React.FC = () => {
       });
     } finally {
       clearTimeout(progressTimer);
+      setSlowResponseWarning(false);
       setIsSubmitting(false);
     }
   };
@@ -136,6 +140,18 @@ export const Login: React.FC = () => {
                   <AlertCircle size={18} />
                   <span className="text-sm">
                     {error || errors.root?.message || 'Login failed'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Slow Response Warning */}
+            {slowResponseWarning && (
+              <div className="mb-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-xl backdrop-blur-sm">
+                <div className="flex items-center space-x-2 text-yellow-200">
+                  <AlertCircle size={18} />
+                  <span className="text-sm">
+                    The server is responding slowly. Please wait, this may take up to 30 seconds...
                   </span>
                 </div>
               </div>
