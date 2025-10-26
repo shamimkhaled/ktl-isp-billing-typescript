@@ -22,6 +22,7 @@ const Report = lazy(() => import("./pages/Report").then(m => ({ default: m.Repor
 const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings").then(m => ({ default: m.OrganizationSettings })));
 const Payment = lazy(() => import("./pages/Payment").then(m => ({ default: m.Payment })));
 
+//app
 // Create QueryClient
 const queryClient = new QueryClient();
 
