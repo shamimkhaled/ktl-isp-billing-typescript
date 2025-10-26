@@ -20,6 +20,7 @@ const RoleManagement = lazy(() => import("./pages/RoleManagement").then(m => ({ 
 const PermissionManagement = lazy(() => import("./pages/PermissionManagement").then(m => ({ default: m.PermissionManagement })));
 const Report = lazy(() => import("./pages/Report").then(m => ({ default: m.Report })));
 const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings").then(m => ({ default: m.OrganizationSettings })));
+const Payment = lazy(() => import("./pages/Payment").then(m => ({ default: m.Payment })));
 
 // Create QueryClient
 const queryClient = new QueryClient();
@@ -128,6 +129,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <OrganizationSettings />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/payments"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Payment />
                 </Layout>
               </ProtectedRoute>
             }

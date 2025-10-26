@@ -59,6 +59,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { label: 'Zone List', path: '/zones' },
       { label: 'SDT Terminals', path: '/zones/sdt' },
+      { label: 'Payments', path: '/zones/payments' },
     ],
   },
   {
