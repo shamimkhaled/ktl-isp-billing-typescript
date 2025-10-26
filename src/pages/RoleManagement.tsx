@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Shield,
   Plus,
@@ -9,34 +9,59 @@ import {
   Trash2,
   MoreVertical,
   Search,
-} from 'lucide-react';
-import { roleService } from '../services/role.service';
-import { permissionService } from '../services/permission.service';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
-import { Card } from '../components/common/Card';
-import { Modal } from '../components/common/Modal';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { formatDate } from '../utils/helpers';
-import type { Role, Permission } from '../types/user.types';
-import { toast } from 'sonner';
-
+} from "lucide-react";
+import type { Role, Permission } from "../types/user.types";
+import { toast } from "sonner";
+import { roleService } from "../services/role.service";
+import { permissionService } from "../services/permission.service";
+import { Button } from "../components/common/Button";
+import { Input } from "../components/common/Input";
+import { Card } from "../components/common/Card";
+import { Modal } from "../components/common/Modal";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { formatDate } from "../utils/helpers";
 // Role form validation schemas
-const roleCreateSchema = z.object({
-  name: z.string().min(3, 'Role name must be at least 3 characters'),
-  display_name: z.string().min(3, 'Display name must be at least 3 characters'),
-  description: z.string().optional(),
-  role_level: z.number().min(0).max(100),
-  is_active: z.boolean().default(true),
-  can_assign_roles: z.boolean().default(false),
-  max_assignments: z.number().optional(),
-  permission_ids: z.array(z.number()).default([]),
-});
+const roleCreateSchema = z
+  .object({
+    name: z.string().min(1, "Role name is required"),
+    custom_name: z.string().optional(),
+    display_name: z
+      .string()
+      .min(3, "Display name must be at least 3 characters"),
+    description: z.string().optional(),
+    role_level: z.number().min(0).max(100),
+    is_active: z.boolean().default(true),
+    can_assign_roles: z.boolean().default(false),
+    max_assignments: z.number().optional(),
+    permission_ids: z.array(z.number()).default([]),
+  })
+  .superRefine((data, ctx) => {
+    // If user selects "other" for name, ensure custom_name is provided and valid
+    if (data.name === "other") {
+      if (!data.custom_name || data.custom_name.trim().length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Custom role name must be at least 3 characters",
+          path: ["custom_name"],
+        });
+      }
+    } else {
+      // When a built-in name is chosen, ensure it's at least 3 chars as well
+      if (!data.name || data.name.trim().length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Role name must be at least 3 characters",
+          path: ["name"],
+        });
+      }
+    }
+  });
 
 const roleUpdateSchema = roleCreateSchema.partial();
 
 interface RoleFormData {
   name?: string;
+  custom_name?: string;
   display_name?: string;
   description?: string;
   role_level?: number;
@@ -71,16 +96,18 @@ const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
       </td>
       <td className="px-6 py-4">
         <div className="text-sm text-gray-900 max-w-xs truncate">
-          {role.description || '-'}
+          {role.description || "-"}
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          role.is_active
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {role.is_active ? 'Active' : 'Inactive'}
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            role.is_active
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {role.is_active ? "Active" : "Inactive"}
         </span>
       </td>
       <td className="px-6 py-4 text-sm text-gray-500">
@@ -149,7 +176,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
   onSubmit,
   onUpdate,
   onCancel,
-  loading = false
+  loading = false,
 }) => {
   const isEditing = !!role;
 
@@ -161,39 +188,48 @@ const RoleForm: React.FC<RoleFormProps> = ({
     watch,
   } = useForm<RoleFormData>({
     resolver: zodResolver(isEditing ? roleUpdateSchema : roleCreateSchema),
-    defaultValues: role ? {
-      name: role.name,
-      display_name: role.display_name,
-      description: role.description || '',
-      role_level: role.role_level,
-      is_active: role.is_active,
-      can_assign_roles: role.can_assign_roles,
-      max_assignments: role.max_assignments || undefined,
-      permission_ids: role.permission_ids,
-    } : {
-      role_level: 1,
-      is_active: true,
-      can_assign_roles: false,
-      permission_ids: [],
-    },
+    defaultValues: role
+      ? {
+          name: role.name,
+          display_name: role.display_name,
+          description: role.description || "",
+          role_level: role.role_level,
+          is_active: role.is_active,
+          can_assign_roles: role.can_assign_roles,
+          max_assignments: role.max_assignments || undefined,
+          permission_ids: role.permission_ids,
+        }
+      : {
+          role_level: 1,
+          is_active: true,
+          can_assign_roles: false,
+          permission_ids: [],
+        },
   });
 
-  const selectedPermissions = watch('permission_ids') || [];
+  const selectedPermissions = watch("permission_ids") || [];
+  const selectedName = watch("name") || "";
 
   const handleFormSubmit = (data: RoleFormData) => {
+    // If the user chose the 'other' select option, replace name with custom_name for API
+    const processed: RoleFormData = { ...data };
+    if (processed.name === "other" && processed.custom_name) {
+      processed.name = processed.custom_name.trim();
+    }
+
     if (isEditing && role && onUpdate) {
-      onUpdate({ id: role.id, ...data });
+      onUpdate({ id: role.id, ...processed });
     } else if (onSubmit) {
-      onSubmit(data);
+      onSubmit(processed);
     }
   };
 
   const handlePermissionToggle = (permissionId: number) => {
     const current = selectedPermissions;
     const updated = current.includes(permissionId)
-      ? current.filter(id => id !== permissionId)
+      ? current.filter((id) => id !== permissionId)
       : [...current, permissionId];
-    setValue('permission_ids', updated);
+    setValue("permission_ids", updated);
   };
 
   return (
@@ -204,7 +240,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
             Role Name
           </label>
           <select
-            {...register('name')}
+            {...register("name")}
             disabled={loading}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           >
@@ -221,7 +257,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
 
         <Input
           label="Display Name"
-          {...register('display_name')}
+          {...register("display_name")}
           error={errors.display_name?.message}
           disabled={loading}
           placeholder="e.g., Administrator, Manager, User"
@@ -233,14 +269,16 @@ const RoleForm: React.FC<RoleFormProps> = ({
           </label>
           <input
             type="number"
-            {...register('role_level', { valueAsNumber: true })}
+            {...register("role_level", { valueAsNumber: true })}
             disabled={loading}
             min="0"
             max="100"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           />
           {errors.role_level && (
-            <p className="text-sm text-red-600 mt-1">{errors.role_level.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.role_level.message}
+            </p>
           )}
         </div>
 
@@ -250,21 +288,23 @@ const RoleForm: React.FC<RoleFormProps> = ({
           </label>
           <input
             type="number"
-            {...register('max_assignments', { valueAsNumber: true })}
+            {...register("max_assignments", { valueAsNumber: true })}
             disabled={loading}
             min="0"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             placeholder="Unlimited"
           />
           {errors.max_assignments && (
-            <p className="text-sm text-red-600 mt-1">{errors.max_assignments.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.max_assignments.message}
+            </p>
           )}
         </div>
 
         <div className="md:col-span-2">
           <Input
             label="Description (Optional)"
-            {...register('description')}
+            {...register("description")}
             error={errors.description?.message}
             disabled={loading}
           />
@@ -274,7 +314,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
           <label className="flex items-center">
             <input
               type="checkbox"
-              {...register('is_active')}
+              {...register("is_active")}
               disabled={loading}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
@@ -284,7 +324,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
           <label className="flex items-center">
             <input
               type="checkbox"
-              {...register('can_assign_roles')}
+              {...register("can_assign_roles")}
               disabled={loading}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
@@ -311,7 +351,9 @@ const RoleForm: React.FC<RoleFormProps> = ({
           ))}
         </div>
         {errors.permission_ids && (
-          <p className="text-sm text-red-600 mt-2">{errors.permission_ids.message}</p>
+          <p className="text-sm text-red-600 mt-2">
+            {errors.permission_ids.message}
+          </p>
         )}
       </div>
 
@@ -324,12 +366,8 @@ const RoleForm: React.FC<RoleFormProps> = ({
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          loading={loading}
-          disabled={loading}
-        >
-          {isEditing ? 'Update Role' : 'Create Role'}
+        <Button type="submit" loading={loading} disabled={loading}>
+          {isEditing ? "Update Role" : "Create Role"}
         </Button>
       </div>
     </form>
@@ -344,7 +382,7 @@ export const RoleManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -356,16 +394,19 @@ export const RoleManagement: React.FC = () => {
       setLoading(true);
       const [rolesResponse, permissionsResponse] = await Promise.all([
         roleService.getRoles(),
-        permissionService.getPermissions()
+        permissionService.getPermissions(),
       ]);
       setRoles(rolesResponse.results);
       setPermissions(permissionsResponse.results);
     } catch (error: any) {
-      console.warn('Failed to load roles and permissions from API, using mock data:', error);
+      console.warn(
+        "Failed to load roles and permissions from API, using mock data:",
+        error
+      );
       // Fallback to mock data for development
       setRoles(getMockRoles());
       setPermissions(getMockPermissions());
-      toast.error('Using demo data - API not available');
+      toast.error("Using demo data - API not available");
     } finally {
       setLoading(false);
     }
@@ -374,10 +415,10 @@ export const RoleManagement: React.FC = () => {
   // Mock data for development
   const getMockRoles = (): Role[] => [
     {
-      id: 'role-admin-001',
-      name: 'admin',
-      display_name: 'Administrator',
-      description: 'Full system access with all permissions',
+      id: "role-admin-001",
+      name: "admin",
+      display_name: "Administrator",
+      description: "Full system access with all permissions",
       role_level: 100,
       is_active: true,
       is_system_role: true,
@@ -385,15 +426,15 @@ export const RoleManagement: React.FC = () => {
       max_assignments: undefined,
       permissions: [],
       permission_ids: [1, 2, 3, 4, 5],
-      users_count: '3',
+      users_count: "3",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
     {
-      id: 'role-manager-001',
-      name: 'manager',
-      display_name: 'Manager',
-      description: 'Management level access',
+      id: "role-manager-001",
+      name: "manager",
+      display_name: "Manager",
+      description: "Management level access",
       role_level: 50,
       is_active: true,
       is_system_role: false,
@@ -401,15 +442,15 @@ export const RoleManagement: React.FC = () => {
       max_assignments: 10,
       permissions: [],
       permission_ids: [1, 2, 3],
-      users_count: '5',
+      users_count: "5",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
     {
-      id: 'role-user-001',
-      name: 'user',
-      display_name: 'User',
-      description: 'Basic user access',
+      id: "role-user-001",
+      name: "user",
+      display_name: "User",
+      description: "Basic user access",
       role_level: 1,
       is_active: true,
       is_system_role: false,
@@ -417,34 +458,54 @@ export const RoleManagement: React.FC = () => {
       max_assignments: undefined,
       permissions: [],
       permission_ids: [1],
-      users_count: '25',
+      users_count: "25",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
   ];
 
   const getMockPermissions = (): Permission[] => [
-    { id: 1, name: 'Can view users', codename: 'view_user', content_type: 1 },
-    { id: 2, name: 'Can add users', codename: 'add_user', content_type: 1 },
-    { id: 3, name: 'Can change users', codename: 'change_user', content_type: 1 },
-    { id: 4, name: 'Can delete users', codename: 'delete_user', content_type: 1 },
-    { id: 5, name: 'Can view roles', codename: 'view_role', content_type: 2 },
-    { id: 6, name: 'Can add roles', codename: 'add_role', content_type: 2 },
-    { id: 7, name: 'Can change roles', codename: 'change_role', content_type: 2 },
-    { id: 8, name: 'Can delete roles', codename: 'delete_role', content_type: 2 },
+    { id: 1, name: "Can view users", codename: "view_user", content_type: 1 },
+    { id: 2, name: "Can add users", codename: "add_user", content_type: 1 },
+    {
+      id: 3,
+      name: "Can change users",
+      codename: "change_user",
+      content_type: 1,
+    },
+    {
+      id: 4,
+      name: "Can delete users",
+      codename: "delete_user",
+      content_type: 1,
+    },
+    { id: 5, name: "Can view roles", codename: "view_role", content_type: 2 },
+    { id: 6, name: "Can add roles", codename: "add_role", content_type: 2 },
+    {
+      id: 7,
+      name: "Can change roles",
+      codename: "change_role",
+      content_type: 2,
+    },
+    {
+      id: 8,
+      name: "Can delete roles",
+      codename: "delete_role",
+      content_type: 2,
+    },
   ];
 
   const handleCreateRole = async (data: RoleFormData) => {
     setIsSubmitting(true);
     try {
       const newRole = await roleService.createRole(data as any);
-      
+
       // Update local state immediately with the new role
       const roleToAdd: Role = {
         id: newRole.id || `role-${Date.now()}`,
-        name: data.name || '',
-        display_name: data.display_name || '',
-        description: data.description || '',
+        name: data.name || "",
+        display_name: data.display_name || "",
+        description: data.description || "",
         role_level: data.role_level || 1,
         is_active: data.is_active ?? true,
         is_system_role: false,
@@ -452,36 +513,47 @@ export const RoleManagement: React.FC = () => {
         max_assignments: data.max_assignments,
         permissions: [],
         permission_ids: data.permission_ids || [],
-        users_count: '0',
+        users_count: "0",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      
-      setRoles(prevRoles => [...prevRoles, roleToAdd]);
+
+      setRoles((prevRoles) => [...prevRoles, roleToAdd]);
       setShowCreateModal(false);
-      toast.success('Role created successfully');
+      toast.success("Role created successfully");
     } catch (error: any) {
-      // If API fails, still add to local state for demo purposes
-      const roleToAdd: Role = {
-        id: `role-${Date.now()}`,
-        name: data.name || '',
-        display_name: data.display_name || '',
-        description: data.description || '',
-        role_level: data.role_level || 1,
-        is_active: data.is_active ?? true,
-        is_system_role: false,
-        can_assign_roles: data.can_assign_roles || false,
-        max_assignments: data.max_assignments,
-        permissions: [],
-        permission_ids: data.permission_ids || [],
-        users_count: '0',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      
-      setRoles(prevRoles => [...prevRoles, roleToAdd]);
-      setShowCreateModal(false);
-      toast.success('Role created successfully (demo mode)');
+      const isDemo =
+        process.env.NODE_ENV !== "production" ||
+        process.env.REACT_APP_DEMO === "true" ||
+        process.env.VITE_DEMO === "true";
+
+      if (isDemo) {
+        // Demo fallback: add to local state so UI remains usable during development/demo
+        const roleToAdd: Role = {
+          id: `role-${Date.now()}`,
+          name: data.name || "",
+          display_name: data.display_name || "",
+          description: data.description || "",
+          role_level: data.role_level || 1,
+          is_active: data.is_active ?? true,
+          is_system_role: false,
+          can_assign_roles: data.can_assign_roles || false,
+          max_assignments: data.max_assignments,
+          permissions: [],
+          permission_ids: data.permission_ids || [],
+          users_count: "0",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        setRoles((prevRoles) => [...prevRoles, roleToAdd]);
+        setShowCreateModal(false);
+        toast.success("Role created successfully (demo mode)");
+      } else {
+        // In production, surface the API error and do not mutate persistent state
+        console.error("Failed to create role:", error);
+        toast.error(error?.message || "Failed to create role");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -492,10 +564,10 @@ export const RoleManagement: React.FC = () => {
     setIsSubmitting(true);
     try {
       await roleService.updateRole(id, updateData as any);
-      
+
       // Update local state immediately
-      setRoles(prevRoles =>
-        prevRoles.map(role =>
+      setRoles((prevRoles) =>
+        prevRoles.map((role) =>
           role.id === id
             ? {
                 ...role,
@@ -505,25 +577,36 @@ export const RoleManagement: React.FC = () => {
             : role
         )
       );
-      
+
       setEditingRole(null);
-      toast.success('Role updated successfully');
+      toast.success("Role updated successfully");
     } catch (error: any) {
-      // If API fails, still update local state for demo purposes
-      setRoles(prevRoles =>
-        prevRoles.map(role =>
-          role.id === id
-            ? {
-                ...role,
-                ...updateData,
-                updated_at: new Date().toISOString(),
-              }
-            : role
-        )
-      );
-      
-      setEditingRole(null);
-      toast.success('Role updated successfully (demo mode)');
+      const isDemo =
+        process.env.NODE_ENV !== "production" ||
+        process.env.REACT_APP_DEMO === "true" ||
+        process.env.VITE_DEMO === "true";
+
+      if (isDemo) {
+        // Demo fallback: update local state so UI remains usable during development/demo
+        setRoles((prevRoles) =>
+          prevRoles.map((role) =>
+            role.id === id
+              ? {
+                  ...role,
+                  ...updateData,
+                  updated_at: new Date().toISOString(),
+                }
+              : role
+          )
+        );
+
+        setEditingRole(null);
+        toast.success("Role updated successfully (demo mode)");
+      } else {
+        // In production, surface the API error and do not mutate persistent state
+        console.error("Failed to update role:", error);
+        toast.error(error?.message || "Failed to update role");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -535,25 +618,41 @@ export const RoleManagement: React.FC = () => {
     setIsSubmitting(true);
     try {
       await roleService.deleteRole(deletingRole.id);
-      
+
       // Update local state immediately
-      setRoles(prevRoles => prevRoles.filter(role => role.id !== deletingRole.id));
+      setRoles((prevRoles) =>
+        prevRoles.filter((role) => role.id !== deletingRole.id)
+      );
       setDeletingRole(null);
-      toast.success('Role deleted successfully');
+      toast.success("Role deleted successfully");
     } catch (error: any) {
-      // If API fails, still update local state for demo purposes
-      setRoles(prevRoles => prevRoles.filter(role => role.id !== deletingRole.id));
-      setDeletingRole(null);
-      toast.success('Role deleted successfully (demo mode)');
+      const isDemo =
+        process.env.NODE_ENV !== "production" ||
+        process.env.REACT_APP_DEMO === "true" ||
+        process.env.VITE_DEMO === "true";
+
+      if (isDemo) {
+        // Demo fallback: remove locally
+        setRoles((prevRoles) =>
+          prevRoles.filter((role) => role.id !== deletingRole.id)
+        );
+        setDeletingRole(null);
+        toast.success("Role deleted successfully (demo mode)");
+      } else {
+        console.error("Failed to delete role:", error);
+        toast.error(error?.message || "Failed to delete role");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const filteredRoles = roles.filter(role =>
-    role.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (role.description && role.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredRoles = roles.filter(
+    (role) =>
+      role.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (role.description &&
+        role.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -602,9 +701,13 @@ export const RoleManagement: React.FC = () => {
         ) : filteredRoles.length === 0 ? (
           <div className="text-center py-12">
             <Shield className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No roles found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No roles found
+            </h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm ? 'No roles match your search criteria.' : 'Get started by adding your first role.'}
+              {searchTerm
+                ? "No roles match your search criteria."
+                : "Get started by adding your first role."}
             </p>
             {!searchTerm && (
               <Button onClick={() => setShowCreateModal(true)}>
@@ -703,14 +806,17 @@ export const RoleManagement: React.FC = () => {
             </div>
             <div>
               <h4 className="font-medium text-gray-900">Delete Role</h4>
-              <p className="text-sm text-gray-600">This action cannot be undone.</p>
+              <p className="text-sm text-gray-600">
+                This action cannot be undone.
+              </p>
             </div>
           </div>
 
           {deletingRole && (
             <p className="text-sm text-gray-600">
-              Are you sure you want to delete <strong>{deletingRole.display_name}</strong>?
-              This will remove the role from all users who have it assigned.
+              Are you sure you want to delete{" "}
+              <strong>{deletingRole.display_name}</strong>? This will remove the
+              role from all users who have it assigned.
             </p>
           )}
 
