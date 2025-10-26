@@ -15,6 +15,11 @@ import { Sidebar } from "./components/common/Sidebar";
 
 const Login = lazy(() => import("./pages/Login").then(m => ({ default: m.Login })));
 const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const UserManagement = lazy(() => import("./pages/UserManagement").then(m => ({ default: m.UserManagement })));
+const RoleManagement = lazy(() => import("./pages/RoleManagement").then(m => ({ default: m.RoleManagement })));
+const PermissionManagement = lazy(() => import("./pages/PermissionManagement").then(m => ({ default: m.PermissionManagement })));
+const Report = lazy(() => import("./pages/Report").then(m => ({ default: m.Report })));
+const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings").then(m => ({ default: m.OrganizationSettings })));
 
 // Create QueryClient
 const queryClient = new QueryClient();
@@ -73,6 +78,56 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UserManagement />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/roles"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RoleManagement />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/permissions"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <PermissionManagement />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Report />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/organization"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OrganizationSettings />
                 </Layout>
               </ProtectedRoute>
             }
