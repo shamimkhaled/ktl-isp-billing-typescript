@@ -1,6 +1,11 @@
 // src/App.tsx
 import React, { useEffect, Suspense, lazy, memo } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { Provider } from "react-redux";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
@@ -13,23 +18,50 @@ import { Header } from "./components/common/Header";
 import { useAppSelector } from "./store";
 import { Sidebar } from "./components/common/Sidebar";
 
-const Login = lazy(() => import("./pages/Login").then(m => ({ default: m.Login })));
-const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
-const UserManagement = lazy(() => import("./pages/UserManagement").then(m => ({ default: m.UserManagement })));
-const RoleManagement = lazy(() => import("./pages/RoleManagement").then(m => ({ default: m.RoleManagement })));
-const PermissionManagement = lazy(() => import("./pages/PermissionManagement").then(m => ({ default: m.PermissionManagement })));
-const Report = lazy(() => import("./pages/Report").then(m => ({ default: m.Report })));
-const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings").then(m => ({ default: m.OrganizationSettings })));
+const Login = lazy(() =>
+  import("./pages/Login").then((m) => ({ default: m.Login }))
+);
+const Dashboard = lazy(() =>
+  import("./pages/Dashboard").then((m) => ({ default: m.Dashboard }))
+);
+const UserManagement = lazy(() =>
+  import("./pages/UserManagement").then((m) => ({ default: m.UserManagement }))
+);
+const RoleManagement = lazy(() =>
+  import("./pages/RoleManagement").then((m) => ({ default: m.RoleManagement }))
+);
+const PermissionManagement = lazy(() =>
+  import("./pages/PermissionManagement").then((m) => ({
+    default: m.PermissionManagement,
+  }))
+);
+const Report = lazy(() =>
+  import("./pages/Report").then((m) => ({ default: m.Report }))
+);
+const OrganizationSettings = lazy(() =>
+  import("./pages/OrganizationSettings").then((m) => ({
+    default: m.OrganizationSettings,
+  }))
+);
+const Zones = lazy(() =>
+  import("./pages/Zones").then((m) => ({ default: m.ZoneList }))
+);
+const ZoneForm = lazy(() =>
+  import("./pages/ZoneForm").then((m) => ({ default: m.ZoneForm }))
+);
 
 // Create QueryClient
 const queryClient = new QueryClient();
 
 // Protected Route - Move this OUTSIDE and BEFORE AppContent
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = memo(({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) return <LoadingSpinner size="xl" message="Checking authentication..." />;
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-});
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = memo(
+  ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
+    if (loading)
+      return <LoadingSpinner size="xl" message="Checking authentication..." />;
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  }
+);
 
 // Layout - Move this OUTSIDE and BEFORE AppContent
 const Layout: React.FC<{ children: React.ReactNode }> = memo(({ children }) => {
@@ -37,16 +69,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = memo(({ children }) => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const themeMode = useAppSelector((s) => s.theme.mode);
 
-  const containerClass = themeMode === 'dark'
-    ? 'min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900'
-    : 'min-h-screen bg-white';
+  const containerClass =
+    themeMode === "dark"
+      ? "min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900"
+      : "min-h-screen bg-white";
 
   return (
     <div className={containerClass}>
       <Header onToggleSidebar={toggleSidebar} />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 mt-16 lg:ml-72 p-4 sm:p-6 max-w-7xl mx-auto">{children}</main>
+        <main className="flex-1 mt-16 lg:ml-72 p-4 sm:p-6 max-w-7xl mx-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -69,7 +104,9 @@ const AppContent: React.FC = () => {
 
   return (
     <Router>
-      <Suspense fallback={<LoadingSpinner size="xl" message="Loading page..." />}>
+      <Suspense
+        fallback={<LoadingSpinner size="xl" message="Loading page..." />}
+      >
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
@@ -123,6 +160,26 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
+            path="/zones"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Zones />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/create"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ZoneForm />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/settings/organization"
             element={
               <ProtectedRoute>
@@ -152,4 +209,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
