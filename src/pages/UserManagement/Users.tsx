@@ -17,16 +17,16 @@ import {
   Mail,
   Phone,
 } from 'lucide-react';
-import { useUsers } from '../hooks/useUsers';
-import { roleService } from '../services/role.service';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
-import { Card } from '../components/common/Card';
-import { Modal } from '../components/common/Modal';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { useDebounce } from '../hooks/useDebounce';
-// import { capitalizeFirst } from '../utils/helpers';
-import type { User, UserCreate, UserUpdate, Role } from '../types/user.types';
+import { useUsers } from '../../hooks/useUsers';
+import { roleService } from '../../services/role.service';
+import { Button } from '../../components/common/Button';
+import { Input } from '../../components/common/Input';
+import { Card } from '../../components/common/Card';
+import { Modal } from '../../components/common/Modal';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { useDebounce } from '../../hooks/useDebounce';
+// import { capitalizeFirst } from '../../utils/helpers';
+import type { User, UserCreate, UserUpdate, Role } from '../../types/user.types';
 
 import { toast } from 'sonner';
 
@@ -87,9 +87,10 @@ interface UserRowProps {
   user: User;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
+  onViewProfile: (user: User) => void;
 }
 
-const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
+const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile }) => {
   const [showMenu, setShowMenu] = useState(false);
 
   // Friendly label mapping for role types (used inline below)
@@ -245,6 +246,16 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Delete User</span>
+              </button>
+              <button
+                onClick={() => {
+                  onViewProfile(user);
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+              >
+                <UserIcon className="w-4 h-4" />
+                <span>View Profile</span>
               </button>
             </div>
           )}
@@ -597,8 +608,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
   );
 };
 
-// Main User Management Component
-export const UserManagement: React.FC = () => {
+// Main Users Component
+export const Users: React.FC = () => {
   const {
     users,
     loading,
@@ -613,6 +624,7 @@ export const UserManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -842,6 +854,7 @@ export const UserManagement: React.FC = () => {
                     user={user}
                     onEdit={setEditingUser}
                     onDelete={setDeletingUser}
+                    onViewProfile={setViewingUser}
                   />
                 ))}
               </tbody>
@@ -1014,6 +1027,186 @@ export const UserManagement: React.FC = () => {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* View User Profile Modal */}
+      <Modal
+        isOpen={!!viewingUser}
+        onClose={() => setViewingUser(null)}
+        title="User Profile"
+        size="lg"
+      >
+        {viewingUser && (
+          <div className="space-y-6">
+            {/* Profile Header */}
+            <div className="flex items-center space-x-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-2xl">
+                  {viewingUser.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-gray-900">{viewingUser.name}</h3>
+                <p className="text-gray-600">{viewingUser.email}</p>
+                <div className="flex items-center space-x-2 mt-2">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    viewingUser.status === 'active'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {viewingUser.status}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {viewingUser.role?.name || 'No Role'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  Contact Information
+                </h4>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Mobile</label>
+                    <p className="text-sm text-gray-900 mt-0.5">{viewingUser.mobile || 'N/A'}</p>
+                  </div>
+                  
+                  {viewingUser.contact_person_name && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Contact Person</label>
+                      <p className="text-sm text-gray-900 mt-0.5">{viewingUser.contact_person_name}</p>
+                    </div>
+                  )}
+                  
+                  {viewingUser.contact_person_phone && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Contact Person Phone</label>
+                      <p className="text-sm text-gray-900 mt-0.5">{viewingUser.contact_person_phone}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Employment Information */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  Employment Information
+                </h4>
+                
+                <div className="space-y-3">
+                  {viewingUser.employee_id && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Employee ID</label>
+                      <p className="text-sm text-gray-900 mt-0.5">{viewingUser.employee_id}</p>
+                    </div>
+                  )}
+                  
+                  {viewingUser.designation && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Designation</label>
+                      <p className="text-sm text-gray-900 mt-0.5">{viewingUser.designation}</p>
+                    </div>
+                  )}
+                  
+                  {viewingUser.department && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Department</label>
+                      <p className="text-sm text-gray-900 mt-0.5">{viewingUser.department}</p>
+                    </div>
+                  )}
+
+                  {viewingUser.salary && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Salary</label>
+                      <p className="text-sm text-gray-900 mt-0.5">৳ {viewingUser.salary.toLocaleString()}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Address Information */}
+              {viewingUser.address && (
+                <div className="space-y-4 md:col-span-2">
+                  <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                    Address Information
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Address</label>
+                      <p className="text-sm text-gray-900 mt-0.5">{viewingUser.address}</p>
+                    </div>
+                    
+                    {viewingUser.postal_code && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-500">Postal Code</label>
+                        <p className="text-sm text-gray-900 mt-0.5">{viewingUser.postal_code}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Information */}
+              <div className="space-y-4 md:col-span-2">
+                <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  Additional Information
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {viewingUser.date_joined && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Date Joined</label>
+                      <p className="text-sm text-gray-900 mt-0.5">
+                        {new Date(viewingUser.date_joined).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {viewingUser.last_login && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Last Login</label>
+                      <p className="text-sm text-gray-900 mt-0.5">
+                        {new Date(viewingUser.last_login).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {viewingUser.remarks && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Remarks</label>
+                    <p className="text-sm text-gray-900 mt-0.5">{viewingUser.remarks}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => setViewingUser(null)}
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingUser(viewingUser);
+                  setViewingUser(null);
+                }}
+              >
+                Edit User
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

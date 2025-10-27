@@ -11,17 +11,17 @@ import {
   Search,
   Folder,
 } from 'lucide-react';
-import { permissionService } from '../services/permission.service';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
-import { Card } from '../components/common/Card';
-import { Modal } from '../components/common/Modal';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { formatDate } from '../utils/helpers';
+import { permissionService } from '../../services/permission.service';
+import { Button } from '../../components/common/Button';
+import { Input } from '../../components/common/Input';
+import { Card } from '../../components/common/Card';
+import { Modal } from '../../components/common/Modal';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { formatDate } from '../../utils/helpers';
 import type {
   CustomPermission,
   PermissionCategory
-} from '../types/user.types';
+} from '../../types/user.types';
 import { toast } from 'sonner';
 
 // Permission form validation schemas

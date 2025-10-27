@@ -24,14 +24,14 @@ const Login = lazy(() =>
 const Dashboard = lazy(() =>
   import("./pages/Dashboard").then((m) => ({ default: m.Dashboard }))
 );
-const UserManagement = lazy(() =>
-  import("./pages/UserManagement").then((m) => ({ default: m.UserManagement }))
+const Users = lazy(() =>
+  import("./pages/UserManagement/Users").then((m) => ({ default: m.Users }))
 );
 const RoleManagement = lazy(() =>
-  import("./pages/RoleManagement").then((m) => ({ default: m.RoleManagement }))
+  import("./pages/UserManagement/RoleManagement").then((m) => ({ default: m.RoleManagement }))
 );
 const PermissionManagement = lazy(() =>
-  import("./pages/PermissionManagement").then((m) => ({
+  import("./pages/UserManagement/PermissionManagement").then((m) => ({
     default: m.PermissionManagement,
   }))
 );
@@ -137,7 +137,7 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <UserManagement />
+                  <Users />
                 </Layout>
               </ProtectedRoute>
             }

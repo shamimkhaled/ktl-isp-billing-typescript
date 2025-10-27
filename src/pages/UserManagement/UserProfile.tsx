@@ -14,14 +14,14 @@ import {
   Edit3,
   X,
 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
-import { Card } from '../components/common/Card';
-import { Modal } from '../components/common/Modal';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { formatDate } from '../utils/helpers';
-import type { UserUpdate } from '../types/user.types';
+import { useAuth } from '../../hooks/useAuth';
+import { Button } from '../../components/common/Button';
+import { Input } from '../../components/common/Input';
+import { Card } from '../../components/common/Card';
+import { Modal } from '../../components/common/Modal';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { formatDate } from '../../utils/helpers';
+import type { UserUpdate } from '../../types/user.types';
 import { toast } from 'sonner';
 
 // Profile update validation schema

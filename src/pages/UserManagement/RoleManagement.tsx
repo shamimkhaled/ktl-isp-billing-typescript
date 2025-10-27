@@ -10,16 +10,16 @@ import {
   MoreVertical,
   Search,
 } from "lucide-react";
-import type { Role, Permission } from "../types/user.types";
+import type { Role, Permission } from "../../types/user.types";
 import { toast } from "sonner";
-import { roleService } from "../services/role.service";
-import { permissionService } from "../services/permission.service";
-import { Button } from "../components/common/Button";
-import { Input } from "../components/common/Input";
-import { Card } from "../components/common/Card";
-import { Modal } from "../components/common/Modal";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { formatDate } from "../utils/helpers";
+import { roleService } from "../../services/role.service";
+import { permissionService } from "../../services/permission.service";
+import { Button } from "../../components/common/Button";
+import { Input } from "../../components/common/Input";
+import { Card } from "../../components/common/Card";
+import { Modal } from "../../components/common/Modal";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { formatDate } from "../../utils/helpers";
 // Role form validation schemas
 const roleCreateSchema = z
   .object({
