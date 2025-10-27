@@ -39,6 +39,7 @@ const userCreateSchema = z.object({
   mobile: z.string().optional(),
   password: z.string()
     .min(8, 'Password must be at least 8 characters'),
+  password_confirm: z.string(),
   user_type: z.enum(['super_admin', 'admin', 'billing_manager', 'noc_manager', 'support_staff', 'reseller_admin', 'sub_reseller_admin', 'field_staff', 'accountant', 'customer_service', 'technical_support']),
   employee_id: z.string().optional(),
   department: z.string().optional(),
@@ -53,9 +54,11 @@ const userCreateSchema = z.object({
   thana: z.string().optional(),
   postal_code: z.string().optional(),
   remarks: z.string().optional(),
-  language_preference: z.enum(['en', 'bn']).optional(),
   timezone: z.string().optional(),
   is_active: z.boolean().default(true),
+}).refine((data) => data.password === data.password_confirm, {
+  path: ['password_confirm'],
+  message: 'Passwords must match',
 });
 
 const userUpdateSchema = z.object({
@@ -75,7 +78,6 @@ const userUpdateSchema = z.object({
   postal_code: z.string().optional(),
   remarks: z.string().optional(),
   profile_photo: z.string().optional(),
-  language_preference: z.enum(['en', 'bn']).optional(),
   timezone: z.string().optional(),
 });
 
@@ -234,16 +236,15 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
       postal_code: user.postal_code || '',
       remarks: user.remarks || '',
       profile_photo: user.profile_photo || '',
-      language_preference: user.language_preference,
       timezone: user.timezone,
     } : {
       user_type: 'field_staff',
-      language_preference: 'en',
       timezone: 'Asia/Dhaka',
       name: '',
       email: '',
       login_id: '',
       password: '',
+      password_confirm: '',
       mobile: '',
       employee_id: '',
       department: '',
@@ -280,7 +281,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
         postal_code: user.postal_code || '',
         remarks: user.remarks || '',
         profile_photo: user.profile_photo || '',
-        language_preference: user.language_preference,
         timezone: user.timezone,
       });
     }
@@ -347,6 +347,13 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
               error={(errors as any).password?.message}
               disabled={loading}
             />
+            <Input
+              label="Retype Password"
+              type="password"
+              {...register('password_confirm')}
+              error={(errors as any).password_confirm?.message}
+              disabled={loading}
+            />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 User Type
@@ -382,7 +389,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           disabled={loading}
         />
         <Input
-          label="Mobile Number (Optional)"
+          label="Mobile (Optional)"
           {...register('mobile')}
           error={errors.mobile?.message}
           disabled={loading}
@@ -392,12 +399,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           label="Employee ID (Optional)"
           {...register('employee_id')}
           error={errors.employee_id?.message}
-          disabled={loading}
-        />
-        <Input
-          label="Department (Optional)"
-          {...register('department')}
-          error={(errors as any).department?.message}
           disabled={loading}
         />
         <Input
@@ -463,27 +464,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           disabled={loading}
         />
         <Input
-          label="Postal Code (Optional)"
+          label="Zip / Post Code (Optional)"
           {...register('postal_code')}
           error={(errors as any).postal_code?.message}
           disabled={loading}
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Language Preference
-          </label>
-          <select
-            {...register('language_preference')}
-            disabled={loading}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-            <option value="en">English</option>
-            <option value="bn">Bengali</option>
-          </select>
-          {(errors as any).language_preference && (
-            <p className="text-sm text-red-600 mt-1">{(errors as any).language_preference.message}</p>
-          )}
-        </div>
+        {/* Language Preference field removed as requested */}
         <Input
           label="Timezone"
           {...register('timezone')}
@@ -493,7 +479,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
         />
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Remarks (Optional)
+            Hints / Remarks (Optional)
           </label>
           <textarea
             {...register('remarks')}
@@ -659,9 +645,17 @@ export const UserManagement: React.FC = () => {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Types</option>
-                <option value="admin">Administrators</option>
-                <option value="manager">Managers</option>
-                <option value="user">Users</option>
+                <option value="super_admin">Super Administrator</option>
+                <option value="admin">Administrator</option>
+                <option value="billing_manager">Billing Manager</option>
+                <option value="noc_manager">NOC Manager</option>
+                <option value="support_staff">Support Staff</option>
+                <option value="reseller_admin">Reseller Administrator</option>
+                <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
+                <option value="field_staff">Field Staff</option>
+                <option value="accountant">Accountant</option>
+                <option value="customer_service">Customer Service</option>
+                <option value="technical_support">Technical Support</option>
               </select>
             </div>
             <Button
