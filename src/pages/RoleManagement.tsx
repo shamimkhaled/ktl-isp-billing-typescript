@@ -114,10 +114,12 @@ const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
         Level {role.role_level}
       </td>
       <td className="px-6 py-4 text-sm text-gray-500">
-        {role.users_count} users
+        {role.max_assignments !== undefined && role.max_assignments !== null 
+          ? `${role.max_assignments} max` 
+          : 'Unlimited'}
       </td>
       <td className="px-6 py-4 text-sm text-gray-500">
-        {role.permissions.length} permissions
+        {role.permission_ids?.length || 0} permissions
       </td>
       <td className="px-6 py-4 text-sm text-gray-500">
         {formatDate(role.created_at)}
@@ -207,8 +209,34 @@ const RoleForm: React.FC<RoleFormProps> = ({
         },
   });
 
-  const selectedPermissions = watch("permission_ids") || [];
-  const selectedName = watch("name") || "";
+  const selectedPermissions = watch('permission_ids') || [];
+  const selectedRoleKey = watch('name') as string | undefined;
+
+  // Map internal role keys to friendly display names to mirror user creation options
+  const roleDisplayMap: Record<string, string> = {
+    super_admin: 'Super Administrator',
+    admin: 'Administrator',
+    billing_manager: 'Billing Manager',
+    noc_manager: 'NOC Manager',
+    support_staff: 'Support Staff',
+    reseller_admin: 'Reseller Administrator',
+    sub_reseller_admin: 'Sub-Reseller Administrator',
+    field_staff: 'Field Staff',
+    accountant: 'Accountant',
+    customer_service: 'Customer Service',
+    technical_support: 'Technical Support',
+  };
+
+  // When selecting a role key, auto-suggest Display Name if it's empty
+  useEffect(() => {
+    if (selectedRoleKey) {
+      const suggested = roleDisplayMap[selectedRoleKey] || selectedRoleKey.replace(/_/g, ' ');
+      const currentDisplay = watch('display_name');
+      if (!currentDisplay) {
+        setValue('display_name', suggested, { shouldValidate: true });
+      }
+    }
+  }, [selectedRoleKey, setValue]);
 
   const handleFormSubmit = (data: RoleFormData) => {
     // If the user chose the 'other' select option, replace name with custom_name for API
@@ -245,10 +273,17 @@ const RoleForm: React.FC<RoleFormProps> = ({
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           >
             <option value="">Select a role</option>
-            <option value="noc">NOC</option>
-            <option value="accounts">Accounts</option>
-            <option value="dev">Dev</option>
-            <option value="manager">Project Manager</option>
+            <option value="super_admin">Super Administrator</option>
+            <option value="admin">Administrator</option>
+            <option value="billing_manager">Billing Manager</option>
+            <option value="noc_manager">NOC Manager</option>
+            <option value="support_staff">Support Staff</option>
+            <option value="reseller_admin">Reseller Administrator</option>
+            <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
+            <option value="field_staff">Field Staff</option>
+            <option value="accountant">Accountant</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="technical_support">Technical Support</option>
           </select>
           {errors.name && (
             <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
@@ -392,19 +427,27 @@ export const RoleManagement: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [rolesResponse, permissionsResponse] = await Promise.all([
-        roleService.getRoles(),
-        permissionService.getPermissions(),
-      ]);
-      setRoles(rolesResponse.results);
+      
+      // Check localStorage first for saved roles
+      const savedRoles = localStorage.getItem('demo_roles');
+      if (savedRoles) {
+        setRoles(JSON.parse(savedRoles));
+      } else {
+        setRoles([]);
+      }
+      
+      // Load permissions from API
+      const permissionsResponse = await permissionService.getPermissions();
       setPermissions(permissionsResponse.results);
     } catch (error: any) {
-      console.warn(
-        "Failed to load roles and permissions from API, using mock data:",
-        error
-      );
+      console.warn('Failed to load permissions from API, using mock data:', error);
       // Fallback to mock data for development
-      setRoles(getMockRoles());
+      const savedRoles = localStorage.getItem('demo_roles');
+      if (savedRoles) {
+        setRoles(JSON.parse(savedRoles));
+      } else {
+        setRoles([]);
+      }
       setPermissions(getMockPermissions());
       toast.error("Using demo data - API not available");
     } finally {
@@ -412,57 +455,8 @@ export const RoleManagement: React.FC = () => {
     }
   };
 
-  // Mock data for development
-  const getMockRoles = (): Role[] => [
-    {
-      id: "role-admin-001",
-      name: "admin",
-      display_name: "Administrator",
-      description: "Full system access with all permissions",
-      role_level: 100,
-      is_active: true,
-      is_system_role: true,
-      can_assign_roles: true,
-      max_assignments: undefined,
-      permissions: [],
-      permission_ids: [1, 2, 3, 4, 5],
-      users_count: "3",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "role-manager-001",
-      name: "manager",
-      display_name: "Manager",
-      description: "Management level access",
-      role_level: 50,
-      is_active: true,
-      is_system_role: false,
-      can_assign_roles: false,
-      max_assignments: 10,
-      permissions: [],
-      permission_ids: [1, 2, 3],
-      users_count: "5",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "role-user-001",
-      name: "user",
-      display_name: "User",
-      description: "Basic user access",
-      role_level: 1,
-      is_active: true,
-      is_system_role: false,
-      can_assign_roles: false,
-      max_assignments: undefined,
-      permissions: [],
-      permission_ids: [1],
-      users_count: "25",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ];
+  // Mock data for development - empty list
+  const getMockRoles = (): Role[] => [];
 
   const getMockPermissions = (): Permission[] => [
     { id: 1, name: "Can view users", codename: "view_user", content_type: 1 },
@@ -517,43 +511,36 @@ export const RoleManagement: React.FC = () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-
-      setRoles((prevRoles) => [...prevRoles, roleToAdd]);
+      
+      const updatedRoles = [...roles, roleToAdd];
+      setRoles(updatedRoles);
+      localStorage.setItem('demo_roles', JSON.stringify(updatedRoles));
       setShowCreateModal(false);
       toast.success("Role created successfully");
     } catch (error: any) {
-      const isDemo =
-        process.env.NODE_ENV !== "production" ||
-        process.env.REACT_APP_DEMO === "true" ||
-        process.env.VITE_DEMO === "true";
-
-      if (isDemo) {
-        // Demo fallback: add to local state so UI remains usable during development/demo
-        const roleToAdd: Role = {
-          id: `role-${Date.now()}`,
-          name: data.name || "",
-          display_name: data.display_name || "",
-          description: data.description || "",
-          role_level: data.role_level || 1,
-          is_active: data.is_active ?? true,
-          is_system_role: false,
-          can_assign_roles: data.can_assign_roles || false,
-          max_assignments: data.max_assignments,
-          permissions: [],
-          permission_ids: data.permission_ids || [],
-          users_count: "0",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        setRoles((prevRoles) => [...prevRoles, roleToAdd]);
-        setShowCreateModal(false);
-        toast.success("Role created successfully (demo mode)");
-      } else {
-        // In production, surface the API error and do not mutate persistent state
-        console.error("Failed to create role:", error);
-        toast.error(error?.message || "Failed to create role");
-      }
+      // If API fails, still add to local state for demo purposes
+      const roleToAdd: Role = {
+        id: `role-${Date.now()}`,
+        name: data.name || '',
+        display_name: data.display_name || '',
+        description: data.description || '',
+        role_level: data.role_level || 1,
+        is_active: data.is_active ?? true,
+        is_system_role: false,
+        can_assign_roles: data.can_assign_roles || false,
+        max_assignments: data.max_assignments,
+        permissions: [],
+        permission_ids: data.permission_ids || [],
+        users_count: '0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      const updatedRoles = [...roles, roleToAdd];
+      setRoles(updatedRoles);
+      localStorage.setItem('demo_roles', JSON.stringify(updatedRoles));
+      setShowCreateModal(false);
+      toast.success('Role created successfully (demo mode)');
     } finally {
       setIsSubmitting(false);
     }
@@ -566,47 +553,36 @@ export const RoleManagement: React.FC = () => {
       await roleService.updateRole(id, updateData as any);
 
       // Update local state immediately
-      setRoles((prevRoles) =>
-        prevRoles.map((role) =>
-          role.id === id
-            ? {
-                ...role,
-                ...updateData,
-                updated_at: new Date().toISOString(),
-              }
-            : role
-        )
+      const updatedRoles = roles.map(role =>
+        role.id === id
+          ? {
+              ...role,
+              ...updateData,
+              updated_at: new Date().toISOString(),
+            }
+          : role
       );
-
+      setRoles(updatedRoles);
+      localStorage.setItem('demo_roles', JSON.stringify(updatedRoles));
+      
       setEditingRole(null);
       toast.success("Role updated successfully");
     } catch (error: any) {
-      const isDemo =
-        process.env.NODE_ENV !== "production" ||
-        process.env.REACT_APP_DEMO === "true" ||
-        process.env.VITE_DEMO === "true";
-
-      if (isDemo) {
-        // Demo fallback: update local state so UI remains usable during development/demo
-        setRoles((prevRoles) =>
-          prevRoles.map((role) =>
-            role.id === id
-              ? {
-                  ...role,
-                  ...updateData,
-                  updated_at: new Date().toISOString(),
-                }
-              : role
-          )
-        );
-
-        setEditingRole(null);
-        toast.success("Role updated successfully (demo mode)");
-      } else {
-        // In production, surface the API error and do not mutate persistent state
-        console.error("Failed to update role:", error);
-        toast.error(error?.message || "Failed to update role");
-      }
+      // If API fails, still update local state for demo purposes
+      const updatedRoles = roles.map(role =>
+        role.id === id
+          ? {
+              ...role,
+              ...updateData,
+              updated_at: new Date().toISOString(),
+            }
+          : role
+      );
+      setRoles(updatedRoles);
+      localStorage.setItem('demo_roles', JSON.stringify(updatedRoles));
+      
+      setEditingRole(null);
+      toast.success('Role updated successfully (demo mode)');
     } finally {
       setIsSubmitting(false);
     }
@@ -620,28 +596,18 @@ export const RoleManagement: React.FC = () => {
       await roleService.deleteRole(deletingRole.id);
 
       // Update local state immediately
-      setRoles((prevRoles) =>
-        prevRoles.filter((role) => role.id !== deletingRole.id)
-      );
+      const updatedRoles = roles.filter(role => role.id !== deletingRole.id);
+      setRoles(updatedRoles);
+      localStorage.setItem('demo_roles', JSON.stringify(updatedRoles));
       setDeletingRole(null);
       toast.success("Role deleted successfully");
     } catch (error: any) {
-      const isDemo =
-        process.env.NODE_ENV !== "production" ||
-        process.env.REACT_APP_DEMO === "true" ||
-        process.env.VITE_DEMO === "true";
-
-      if (isDemo) {
-        // Demo fallback: remove locally
-        setRoles((prevRoles) =>
-          prevRoles.filter((role) => role.id !== deletingRole.id)
-        );
-        setDeletingRole(null);
-        toast.success("Role deleted successfully (demo mode)");
-      } else {
-        console.error("Failed to delete role:", error);
-        toast.error(error?.message || "Failed to delete role");
-      }
+      // If API fails, still update local state for demo purposes
+      const updatedRoles = roles.filter(role => role.id !== deletingRole.id);
+      setRoles(updatedRoles);
+      localStorage.setItem('demo_roles', JSON.stringify(updatedRoles));
+      setDeletingRole(null);
+      toast.success('Role deleted successfully (demo mode)');
     } finally {
       setIsSubmitting(false);
     }

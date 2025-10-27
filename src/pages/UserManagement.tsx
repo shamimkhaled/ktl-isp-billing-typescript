@@ -18,14 +18,15 @@ import {
   Phone,
 } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
+import { roleService } from '../services/role.service';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Card } from '../components/common/Card';
 import { Modal } from '../components/common/Modal';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useDebounce } from '../hooks/useDebounce';
-import { formatDate, capitalizeFirst } from '../utils/helpers';
-import type { User, UserCreate, UserUpdate } from '../types/user.types';
+// import { capitalizeFirst } from '../utils/helpers';
+import type { User, UserCreate, UserUpdate, Role } from '../types/user.types';
 
 import { toast } from 'sonner';
 
@@ -39,6 +40,7 @@ const userCreateSchema = z.object({
   mobile: z.string().optional(),
   password: z.string()
     .min(8, 'Password must be at least 8 characters'),
+  password_confirm: z.string(),
   user_type: z.enum(['super_admin', 'admin', 'billing_manager', 'noc_manager', 'support_staff', 'reseller_admin', 'sub_reseller_admin', 'field_staff', 'accountant', 'customer_service', 'technical_support']),
   employee_id: z.string().optional(),
   department: z.string().optional(),
@@ -48,14 +50,16 @@ const userCreateSchema = z.object({
   date_of_birth: z.string().optional(),
   contact_person_name: z.string().optional(),
   contact_person_phone: z.string().optional(),
-  address: z.string().optional(),
+  address: z.string().min(3, 'Address is required'),
   district: z.string().optional(),
   thana: z.string().optional(),
   postal_code: z.string().optional(),
   remarks: z.string().optional(),
-  language_preference: z.enum(['en', 'bn']).optional(),
   timezone: z.string().optional(),
   is_active: z.boolean().default(true),
+}).refine((data) => data.password === data.password_confirm, {
+  path: ['password_confirm'],
+  message: 'Passwords must match',
 });
 
 const userUpdateSchema = z.object({
@@ -75,7 +79,6 @@ const userUpdateSchema = z.object({
   postal_code: z.string().optional(),
   remarks: z.string().optional(),
   profile_photo: z.string().optional(),
-  language_preference: z.enum(['en', 'bn']).optional(),
   timezone: z.string().optional(),
 });
 
@@ -89,26 +92,57 @@ interface UserRowProps {
 const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
 
-  const getUserTypeColor = (userType: string) => {
+  // Friendly label mapping for role types (used inline below)
+
+  const getUserTypeColor = (userType: User['user_type']) => {
     switch (userType) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'manager': return 'bg-blue-100 text-blue-800';
-      case 'user': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'super_admin':
+        return 'bg-purple-100 text-purple-800';
+      case 'admin':
+        return 'bg-red-100 text-red-800';
+      case 'billing_manager':
+        return 'bg-amber-100 text-amber-800';
+      case 'noc_manager':
+        return 'bg-blue-100 text-blue-800';
+      case 'support_staff':
+        return 'bg-teal-100 text-teal-800';
+      case 'reseller_admin':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'sub_reseller_admin':
+        return 'bg-sky-100 text-sky-800';
+      case 'field_staff':
+        return 'bg-green-100 text-green-800';
+      case 'accountant':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'customer_service':
+        return 'bg-pink-100 text-pink-800';
+      case 'technical_support':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getUserTypeIcon = (userType: string) => {
+  const getUserTypeIcon = (userType: User['user_type']) => {
     switch (userType) {
-      case 'admin': return <Shield className="w-4 h-4" />;
-      case 'manager': return <UserCheck className="w-4 h-4" />;
-      case 'user': return <UserIcon className="w-4 h-4" />;
-      default: return <UserIcon className="w-4 h-4" />;
+      case 'super_admin':
+      case 'admin':
+      case 'reseller_admin':
+      case 'sub_reseller_admin':
+        return <Shield className="w-4 h-4" />;
+      case 'billing_manager':
+      case 'noc_manager':
+      case 'support_staff':
+      case 'field_staff':
+        return <UserCheck className="w-4 h-4" />;
+      default:
+        return <UserIcon className="w-4 h-4" />;
     }
   };
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
+      {/* Name */}
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -118,46 +152,70 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
           </div>
           <div>
             <div className="font-medium text-gray-900">{user.name}</div>
-            <div className="text-sm text-gray-500">{user.login_id}</div>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center space-x-2 text-gray-600">
-          <Mail className="w-4 h-4" />
-          <span className="text-sm">{user.email}</span>
-        </div>
-        {user.mobile && (
-          <div className="flex items-center space-x-2 text-gray-500 mt-1">
-            <Phone className="w-4 h-4" />
-            <span className="text-xs">{user.mobile}</span>
-          </div>
-        )}
-      </td>
+
+      {/* Role */}
       <td className="px-6 py-4">
         <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getUserTypeColor(user.user_type)}`}>
           {getUserTypeIcon(user.user_type)}
-          <span>{capitalizeFirst(user.user_type)}</span>
+          <span>{/* Friendly label for role */}
+            {(() => {
+              const map: Record<User['user_type'], string> = {
+                super_admin: 'Super Administrator',
+                admin: 'Administrator',
+                billing_manager: 'Billing Manager',
+                noc_manager: 'NOC Manager',
+                support_staff: 'Support Staff',
+                reseller_admin: 'Reseller Administrator',
+                sub_reseller_admin: 'Sub-Reseller Administrator',
+                field_staff: 'Field Staff',
+                accountant: 'Accountant',
+                customer_service: 'Customer Service',
+                technical_support: 'Technical Support',
+              };
+              return map[user.user_type];
+            })()}
+          </span>
         </div>
       </td>
-      <td className="px-6 py-4">
-        <div className="text-sm text-gray-900">{user.employee_id || '-'}</div>
-        {user.designation && (
-          <div className="text-xs text-gray-500">{user.designation}</div>
-        )}
+
+      {/* Username */}
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {user.login_id}
       </td>
+
+      {/* Status */}
       <td className="px-6 py-4">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          user.is_active
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
+          user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
           {user.is_active ? 'Active' : 'Inactive'}
         </span>
       </td>
-      <td className="px-6 py-4 text-sm text-gray-500">
-        {formatDate(user.created_at)}
+
+      {/* Mobile */}
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {user.mobile || '-'}
       </td>
+
+      {/* Email */}
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {user.email}
+      </td>
+
+      {/* Dept */}
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {user.department || '-'}
+      </td>
+
+      {/* Address */}
+      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={user.address || ''}>
+        {user.address || '-'}
+      </td>
+
+      {/* Actions */}
       <td className="px-6 py-4">
         <div className="relative">
           <button
@@ -199,13 +257,14 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
 // User Form Component
 interface UserFormProps {
   user?: User | null;
+  roles?: Role[];
   onSubmit?: (data: UserCreate) => Promise<void>;
   onUpdate?: (data: UserUpdate & { id: string }) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel, loading = false }) => {
+const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdate, onCancel, loading = false }) => {
   const isEditing = !!user;
 
   const schema = isEditing ? userUpdateSchema : userCreateSchema;
@@ -215,6 +274,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setError,
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: user ? {
@@ -234,16 +295,15 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
       postal_code: user.postal_code || '',
       remarks: user.remarks || '',
       profile_photo: user.profile_photo || '',
-      language_preference: user.language_preference,
       timezone: user.timezone,
     } : {
       user_type: 'field_staff',
-      language_preference: 'en',
       timezone: 'Asia/Dhaka',
       name: '',
       email: '',
       login_id: '',
       password: '',
+      password_confirm: '',
       mobile: '',
       employee_id: '',
       department: '',
@@ -280,7 +340,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
         postal_code: user.postal_code || '',
         remarks: user.remarks || '',
         profile_photo: user.profile_photo || '',
-        language_preference: user.language_preference,
         timezone: user.timezone,
       });
     }
@@ -316,6 +375,18 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
       };
       onUpdate(finalData);
     } else if (onSubmit) {
+      // Check if role exists in roles list before creating user
+      const selectedUserType = (data as any).user_type;
+      const roleExists = roles.find(r => r.name === selectedUserType);
+      
+      if (!roleExists) {
+        setError('user_type', {
+          type: 'manual',
+          message: 'This role is not configured in Role Management. Please create it first.'
+        });
+        return;
+      }
+      
       onSubmit(data as UserCreate);
     }
   };
@@ -347,9 +418,16 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
               error={(errors as any).password?.message}
               disabled={loading}
             />
+            <Input
+              label="Retype Password"
+              type="password"
+              {...register('password_confirm')}
+              error={(errors as any).password_confirm?.message}
+              disabled={loading}
+            />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                User Type
+                Role
               </label>
               <select
                 {...register('user_type')}
@@ -371,6 +449,17 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
               {(errors as any).user_type && (
                 <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
               )}
+              {!isEditing && watch('user_type') && !roles.find(r => r.name === watch('user_type')) && (
+                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800 flex items-center">
+                    <Shield className="w-4 h-4 mr-2" />
+                    <span>
+                      Warning: The selected role is not configured in Role Management. 
+                      Please create this role first to set permissions and limits.
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -382,7 +471,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           disabled={loading}
         />
         <Input
-          label="Mobile Number (Optional)"
+          label="Mobile (Optional)"
           {...register('mobile')}
           error={errors.mobile?.message}
           disabled={loading}
@@ -392,12 +481,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           label="Employee ID (Optional)"
           {...register('employee_id')}
           error={errors.employee_id?.message}
-          disabled={loading}
-        />
-        <Input
-          label="Department (Optional)"
-          {...register('department')}
-          error={(errors as any).department?.message}
           disabled={loading}
         />
         <Input
@@ -433,7 +516,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           disabled={loading}
         />
         <Input
-          label="Address (Optional)"
+          label="Address"
           {...register('address')}
           error={(errors as any).address?.message}
           disabled={loading}
@@ -463,27 +546,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
           disabled={loading}
         />
         <Input
-          label="Postal Code (Optional)"
+          label="Zip / Post Code (Optional)"
           {...register('postal_code')}
           error={(errors as any).postal_code?.message}
           disabled={loading}
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Language Preference
-          </label>
-          <select
-            {...register('language_preference')}
-            disabled={loading}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-            <option value="en">English</option>
-            <option value="bn">Bengali</option>
-          </select>
-          {(errors as any).language_preference && (
-            <p className="text-sm text-red-600 mt-1">{(errors as any).language_preference.message}</p>
-          )}
-        </div>
+        {/* Language Preference field removed as requested */}
         <Input
           label="Timezone"
           {...register('timezone')}
@@ -493,7 +561,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onUpdate, onCancel,
         />
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Remarks (Optional)
+            Hints / Remarks (Optional)
           </label>
           <textarea
             {...register('remarks')}
@@ -548,8 +616,39 @@ export const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [roleLimitError, setRoleLimitError] = useState<{ role: string; limit: number } | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Load roles on mount
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        // First check localStorage for roles (demo mode)
+        const savedRoles = localStorage.getItem('demo_roles');
+        if (savedRoles) {
+          setRoles(JSON.parse(savedRoles));
+          return;
+        }
+        
+        // Try to load from API if no localStorage data
+        const response = await roleService.getRoles();
+        setRoles(response.results);
+      } catch (err) {
+        console.warn('Failed to load roles:', err);
+        // Check localStorage one more time in case API failed
+        const savedRoles = localStorage.getItem('demo_roles');
+        if (savedRoles) {
+          setRoles(JSON.parse(savedRoles));
+        } else {
+          // Use empty array as fallback
+          setRoles([]);
+        }
+      }
+    };
+    loadRoles();
+  }, []);
 
   // Filter and search users
   const filteredUsers = users.filter(user => {
@@ -563,13 +662,28 @@ export const UserManagement: React.FC = () => {
   });
 
   const handleCreateUser = async (data: UserCreate) => {
+    // Check role limit before creating user
+    const selectedRole = roles.find(r => r.name === data.user_type);
+    if (selectedRole && selectedRole.max_assignments !== undefined && selectedRole.max_assignments !== null) {
+      const currentCount = users.filter(u => u.user_type === data.user_type).length;
+      if (currentCount >= selectedRole.max_assignments) {
+        setRoleLimitError({
+          role: selectedRole.display_name,
+          limit: selectedRole.max_assignments,
+        });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      await createUser(data);
-      setShowCreateModal(false);
-      toast.success('User created successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create user');
+      const result = await createUser(data);
+      if (result.success) {
+        setShowCreateModal(false);
+        toast.success('User created successfully');
+      } else {
+        toast.error(result.error || 'Failed to create user');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -579,11 +693,13 @@ export const UserManagement: React.FC = () => {
     const { id, ...updateData } = data;
     setIsSubmitting(true);
     try {
-      await updateUser({ id, ...updateData });
-      setEditingUser(null);
-      toast.success('User updated successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update user');
+      const result = await updateUser({ id, ...updateData });
+      if (result.success) {
+        setEditingUser(null);
+        toast.success('User updated successfully');
+      } else {
+        toast.error(result.error || 'Failed to update user');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -659,9 +775,17 @@ export const UserManagement: React.FC = () => {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Types</option>
-                <option value="admin">Administrators</option>
-                <option value="manager">Managers</option>
-                <option value="user">Users</option>
+                <option value="super_admin">Super Administrator</option>
+                <option value="admin">Administrator</option>
+                <option value="billing_manager">Billing Manager</option>
+                <option value="noc_manager">NOC Manager</option>
+                <option value="support_staff">Support Staff</option>
+                <option value="reseller_admin">Reseller Administrator</option>
+                <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
+                <option value="field_staff">Field Staff</option>
+                <option value="accountant">Accountant</option>
+                <option value="customer_service">Customer Service</option>
+                <option value="technical_support">Technical Support</option>
               </select>
             </div>
             <Button
@@ -700,27 +824,15 @@ export const UserManagement: React.FC = () => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Employee Info
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dept</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -787,6 +899,7 @@ export const UserManagement: React.FC = () => {
         size="lg"
       >
         <UserForm
+          roles={roles}
           onSubmit={handleCreateUser}
           onCancel={() => setShowCreateModal(false)}
           loading={isSubmitting}
@@ -802,6 +915,7 @@ export const UserManagement: React.FC = () => {
       >
         <UserForm
           user={editingUser}
+          roles={roles}
           onSubmit={handleCreateUser}
           onUpdate={handleUpdateUser}
           onCancel={() => setEditingUser(null)}
@@ -849,6 +963,54 @@ export const UserManagement: React.FC = () => {
               disabled={isSubmitting}
             >
               Delete User
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Role Limit Exceeded Modal */}
+      <Modal
+        isOpen={!!roleLimitError}
+        onClose={() => setRoleLimitError(null)}
+        title="Maximum User Limit Reached"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3 p-4 bg-amber-50 rounded-lg">
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+              <Shield className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900">Maximum User for {roleLimitError?.role} Exceeded</h4>
+              <p className="text-sm text-gray-600">Role assignment limit reached.</p>
+            </div>
+          </div>
+          
+          {roleLimitError && (
+            <div className="text-sm text-gray-600 space-y-2">
+              <p>
+                You have reached the maximum number of users ({roleLimitError.limit}) allowed for the <strong>{roleLimitError.role}</strong> role.
+              </p>
+              <p>
+                To create a user with the <strong>{roleLimitError.role}</strong> role, please increase the number assigned for this role from <strong>Role Management</strong>.
+              </p>
+            </div>
+          )}
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setRoleLimitError(null)}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                setRoleLimitError(null);
+                window.location.href = '/users/roles';
+              }}
+            >
+              Go to Role Management
             </Button>
           </div>
         </div>
