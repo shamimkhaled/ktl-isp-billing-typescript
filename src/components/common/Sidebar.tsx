@@ -45,7 +45,7 @@ const menuItems: MenuItem[] = [
     path: '/users',
     gradient: 'from-purple-400 to-pink-400',
     subItems: [
-      { label: 'All Users', path: '/users' },
+      { label: 'Users', path: '/users' },
       { label: 'Roles', path: '/users/roles' },
       { label: 'Permissions', path: '/users/permissions' },
     ],

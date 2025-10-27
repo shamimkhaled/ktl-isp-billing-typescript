@@ -9,6 +9,7 @@ interface UserState {
   totalUsers: number;
   loading: boolean;
   error: string | null;
+  mockMode: boolean;
   pagination: {
     currentPage: number;
     totalPages: number;
@@ -23,12 +24,82 @@ const initialState: UserState = {
   totalUsers: 0,
   loading: false,
   error: null,
+  mockMode: false,
   pagination: {
     currentPage: 1,
     totalPages: 1,
     hasNext: false,
     hasPrevious: false,
   },
+};
+
+// Helper: generate mock users for demo mode
+const generateMockUsers = (): User[] => {
+  const now = new Date().toISOString();
+  return [
+    {
+      id: 'user-admin-001',
+      login_id: 'admin001',
+      email: 'admin@example.com',
+      name: 'Admin User',
+      mobile: '01700000001',
+      user_type: 'admin',
+      employee_id: 'EMP-001',
+      designation: 'Administrator',
+      department: 'IT',
+      salary: '100000.00',
+      date_of_joining: '2023-01-01',
+      date_of_birth: '1990-01-01',
+      address: '123 Admin Street',
+      contact_person_name: 'Support',
+      contact_person_phone: '01700000002',
+      district: 'Dhaka',
+      thana: 'Tejgaon',
+      postal_code: '1215',
+      remarks: 'Demo admin user',
+      is_active: true,
+      is_staff: true,
+      is_email_verified: true,
+      is_phone_verified: true,
+      profile_photo: undefined,
+      language_preference: 'en',
+      timezone: 'Asia/Dhaka',
+      roles: [],
+      permissions: '',
+      last_login: now,
+      date_joined: now,
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: 'user-staff-001',
+      login_id: 'staff001',
+      email: 'staff@example.com',
+      name: 'Field Staff',
+      mobile: '01700000003',
+      user_type: 'field_staff',
+      employee_id: 'EMP-010',
+      designation: 'Technician',
+      department: 'Operations',
+      salary: '35000.00',
+      date_of_joining: '2024-06-15',
+      address: '456 Service Road',
+      district: 'Chattogram',
+      thana: 'Pahartali',
+      postal_code: '4207',
+      is_active: true,
+      is_staff: false,
+      is_email_verified: false,
+      is_phone_verified: true,
+      language_preference: 'en',
+      timezone: 'Asia/Dhaka',
+      roles: [],
+      permissions: '',
+      date_joined: now,
+      created_at: now,
+      updated_at: now,
+    },
+  ];
 };
 
 // Async thunks
@@ -90,6 +161,27 @@ const userSlice = createSlice({
     setCurrentUser: (state, action) => {
       state.currentUser = action.payload;
     },
+    setMockMode: (state, action) => {
+      state.mockMode = action.payload as boolean;
+    },
+    setUsersLocal: (state, action) => {
+      state.users = action.payload as User[];
+      state.totalUsers = state.users.length;
+    },
+    addUserLocal: (state, action) => {
+      state.users.unshift(action.payload as User);
+      state.totalUsers += 1;
+    },
+    updateUserLocal: (state, action) => {
+      const updated = action.payload as User;
+      const idx = state.users.findIndex(u => u.id === updated.id);
+      if (idx !== -1) state.users[idx] = updated;
+    },
+    deleteUserLocal: (state, action) => {
+      const id = action.payload as string;
+      state.users = state.users.filter(u => u.id !== id);
+      state.totalUsers = Math.max(0, state.totalUsers - 1);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -115,6 +207,16 @@ const userSlice = createSlice({
       .addCase(fetchUsersAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        // Enter mock/demo mode with sample users
+        state.mockMode = true;
+        state.users = generateMockUsers();
+        state.totalUsers = state.users.length;
+        state.pagination = {
+          currentPage: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+        };
       })
       
       // Create user
@@ -139,5 +241,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { clearError, setCurrentUser } = userSlice.actions;
+export const { clearError, setCurrentUser, setMockMode, setUsersLocal, addUserLocal, updateUserLocal, deleteUserLocal } = userSlice.actions;
 export default userSlice.reducer;
