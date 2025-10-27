@@ -57,9 +57,16 @@ const menuItems: MenuItem[] = [
     path: "/zones",
     gradient: "from-emerald-400 to-green-400",
     subItems: [
+      { label: "Create Zone", path: "/zones/create" },
       { label: "Zone List", path: "/zones" },
-      { label: "SDT Terminals", path: "/zones/sdt" },
+      { label: "Create SDT", path: "/zones/create-sdt" },
+      { label: "List SDT", path: "/zones/sdt-list" },
+      { label: "Customer Payments", path: "/zones/customer-payments" },
       { label: "Payments", path: "/zones/payments" },
+      { label: "Zone Cust Summ", path: "/zones/zone-customer-summary" },
+      { label: "SDT Coll Summ", path: "/zones/sdt-collection-summary" },
+      { label: "Cust Trends", path: "/zones/customer-trends" },
+      { label: "SDT Rates", path: "/zones/sdt-rates" },
     ],
   },
   {
@@ -118,13 +125,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const isActive = (path?: string) => {
     if (!path) return false;
     if (path === "/dashboard" && location.pathname === "/") return true;
-    return (
-      location.pathname === path || location.pathname.startsWith(path + "/")
-    );
+
+    // Special case for zones
+    if (path === "/zones" && location.pathname.startsWith("/zones/")) {
+      // Return true only if it's exactly /zones, not for subpaths
+      return location.pathname === "/zones";
+    }
+
+    return location.pathname === path;
   };
 
   const isSubItemActive = (item: MenuItem) => {
-    return item.subItems?.some((subItem) => isActive(subItem.path)) || false;
+    return (
+      item.subItems?.some((subItem) => location.pathname === subItem.path) ||
+      false
+    );
   };
 
   return (

@@ -43,15 +43,25 @@ const OrganizationSettings = lazy(() =>
     default: m.OrganizationSettings,
   }))
 );
-const Payment = lazy(() =>
-  import("./pages/Payment").then((m) => ({ default: m.Payment }))
+
+// Zones & SDT Components (lazy-loaded individually)
+const ZoneList = lazy(() => import("./pages/ZonesSDT/ZoneList"));
+const ZoneForm = lazy(() => import("./pages/ZonesSDT/ZoneForm"));
+const CreateSDT = lazy(() => import("./pages/ZonesSDT/CreateSDT"));
+const SDTList = lazy(() => import("./pages/ZonesSDT/SDTList"));
+const CustomerPayments = lazy(
+  () => import("./pages/ZonesSDT/CustomerPayments")
 );
-const Zones = lazy(() =>
-  import("./pages/Zones").then((m) => ({ default: m.ZoneList }))
+// Named ZonePayments to avoid colliding with the existing `Payment` page import above
+const ZonePayments = lazy(() => import("./pages/ZonesSDT/Payments"));
+const ZoneCustomerSummary = lazy(
+  () => import("./pages/ZonesSDT/ZoneCustomerSummary")
 );
-const ZoneForm = lazy(() =>
-  import("./pages/ZoneForm").then((m) => ({ default: m.ZoneForm }))
+const SDTCollectionSummary = lazy(
+  () => import("./pages/ZonesSDT/SDTCollectionSummary")
 );
+const CustomerTrends = lazy(() => import("./pages/ZonesSDT/CustomerTrends"));
+const SDTRates = lazy(() => import("./pages/ZonesSDT/SDTRates"));
 
 //app
 // Create QueryClient
@@ -168,7 +178,7 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Zones />
+                  <ZoneList />
                 </Layout>
               </ProtectedRoute>
             }
@@ -193,12 +203,83 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          {/* Zones & SDT Routes */}
+          <Route
+            path="/zones/create-sdt"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateSDT />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/sdt-list"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SDTList />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/customer-payments"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CustomerPayments />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/zones/payments"
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Payment />
+                  <ZonePayments />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/zone-customer-summary"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ZoneCustomerSummary />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/sdt-collection-summary"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SDTCollectionSummary />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/customer-trends"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CustomerTrends />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/zones/sdt-rates"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SDTRates />
                 </Layout>
               </ProtectedRoute>
             }

@@ -3,37 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/common/Button";
-import { Card } from "../components/common/Card";
-import { Input } from "../components/common/Input";
+import { Button } from "../../components/common/Button";
+import { Card } from "../../components/common/Card";
+import { Input } from "../../components/common/Input";
 import { toast } from "sonner";
-
-// Bangladesh districts and thanas data
-const districtData: Record<string, string[]> = {
-  Dhaka: [
-    "Dhanmondi",
-    "Mirpur",
-    "Mohammadpur",
-    "Gulshan",
-    "Uttara",
-    "Banani",
-    "Tejgaon",
-  ],
-  Chattogram: [
-    "Pahartali",
-    "Halishahar",
-    "Agrabad",
-    "Patenga",
-    "Kotwali",
-    "Double Mooring",
-  ],
-  Rajshahi: ["Boalia", "Motihar", "Shahmokhdum", "Rajpara"],
-  Khulna: ["Sonadanga", "Khalishpur", "Khan Jahan Ali", "Daulatpur", "Kotwali"],
-  Barishal: ["Kotwali", "Bandar", "Kawnia", "Airport"],
-  Sylhet: ["Kotwali", "Dakshin Surma", "Mogla Bazar", "Jalalabad"],
-  Rangpur: ["Kotwali", "Mahiganj", "Dhap", "Pachgachia"],
-  Mymensingh: ["Kotwali", "Ganginar par", "Chorpara", "Mashkanda"],
-};
+import { districtData } from "./types";
 
 const schema = z
   .object({

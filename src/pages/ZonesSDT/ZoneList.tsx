@@ -1,37 +1,19 @@
 import React, { useState } from "react";
 import { Plus, MoreVertical, Edit3, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Card } from "../components/common/Card";
-import { Button } from "../components/common/Button";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { Modal } from "../components/common/Modal";
+import { Card } from "../../components/common/Card";
+import { Button } from "../../components/common/Button";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { Modal } from "../../components/common/Modal";
 import type { FC } from "react";
-
-interface Zone {
-  id: string;
-  sdt_id?: string;
-  parent?: string;
-  zone_name: string;
-  email?: string;
-  mobile1?: string;
-  mobile2?: string;
-  contact_name?: string;
-  contact_number?: string;
-  login_id?: string;
-  address?: string;
-  address2?: string;
-  district?: string;
-  thana?: string;
-  zip_code?: string;
-  remarks?: string;
-  copy_form?: boolean;
-}
+import { Zone } from "./types";
 
 export const ZoneList: FC = () => {
   const navigate = useNavigate();
   const [loading] = useState(false);
   const [openMenu, setMenuOpen] = useState<string | null>(null);
   const [deletingZone, setDeletingZone] = useState<Zone | null>(null);
+
   // Placeholder zones - replace with API data when service/hook is available
   const [zones] = useState<Zone[]>([
     {
