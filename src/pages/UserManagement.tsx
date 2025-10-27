@@ -143,7 +143,7 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       {/* Name */}
-      <td className="px-6 py-4">
+  <td className="px-3 py-2">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
             <span className="text-white font-semibold text-sm">
@@ -157,7 +157,7 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
       </td>
 
       {/* Role */}
-      <td className="px-6 py-4">
+  <td className="px-3 py-2 hidden md:table-cell">
         <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getUserTypeColor(user.user_type)}`}>
           {getUserTypeIcon(user.user_type)}
           <span>{/* Friendly label for role */}
@@ -182,12 +182,12 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
       </td>
 
       {/* Username */}
-      <td className="px-6 py-4 text-sm text-gray-900">
+  <td className="px-3 py-2 text-sm text-gray-900 hidden lg:table-cell truncate">
         {user.login_id}
       </td>
 
       {/* Status */}
-      <td className="px-6 py-4">
+  <td className="px-3 py-2">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
           user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
@@ -196,27 +196,27 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete }) => {
       </td>
 
       {/* Mobile */}
-      <td className="px-6 py-4 text-sm text-gray-900">
+  <td className="px-3 py-2 text-sm text-gray-900 hidden xl:table-cell truncate">
         {user.mobile || '-'}
       </td>
 
       {/* Email */}
-      <td className="px-6 py-4 text-sm text-gray-900">
+  <td className="px-3 py-2 text-sm text-gray-900 hidden lg:table-cell truncate max-w-xs" title={user.email}>
         {user.email}
       </td>
 
       {/* Dept */}
-      <td className="px-6 py-4 text-sm text-gray-900">
+  <td className="px-3 py-2 text-sm text-gray-900 hidden xl:table-cell truncate">
         {user.department || '-'}
       </td>
 
       {/* Address */}
-      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={user.address || ''}>
+  <td className="px-3 py-2 text-sm text-gray-900 hidden 2xl:table-cell truncate max-w-xs" title={user.address || ''}>
         {user.address || '-'}
       </td>
 
       {/* Actions */}
-      <td className="px-6 py-4">
+  <td className="px-3 py-2">
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
@@ -820,19 +820,19 @@ export const UserManagement: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dept</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Role</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Username</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Mobile</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Email</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Dept</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden 2xl:table-cell">Address</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
