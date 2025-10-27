@@ -49,9 +49,8 @@ const ZoneList = lazy(() => import("./pages/ZonesSDT/ZoneList"));
 const ZoneForm = lazy(() => import("./pages/ZonesSDT/ZoneForm"));
 const CreateSDT = lazy(() => import("./pages/ZonesSDT/CreateSDT"));
 const SDTList = lazy(() => import("./pages/ZonesSDT/SDTList"));
-const CustomerPayments = lazy(
-  () => import("./pages/ZonesSDT/CustomerPayments")
-);
+const CustomerPayments = lazy(() => import("./pages/ZonesSDT/CustomerPayments"));
+
 // Named ZonePayments to avoid colliding with the existing `Payment` page import above
 const ZonePayments = lazy(() => import("./pages/ZonesSDT/Payments"));
 const ZoneCustomerSummary = lazy(
