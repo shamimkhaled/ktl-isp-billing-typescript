@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -610,6 +611,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
 
 // Main Users Component
 export const Users: React.FC = () => {
+  const navigate = useNavigate();
   const {
     users,
     loading,
@@ -745,7 +747,7 @@ export const Users: React.FC = () => {
   }, [error, clearError]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -1020,7 +1022,7 @@ export const Users: React.FC = () => {
             <Button
               onClick={() => {
                 setRoleLimitError(null);
-                window.location.href = '/users/roles';
+                navigate('/users/roles');
               }}
             >
               Go to Role Management

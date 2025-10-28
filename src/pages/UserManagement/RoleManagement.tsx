@@ -9,11 +9,14 @@ import {
   Trash2,
   MoreVertical,
   Search,
+  AlertTriangle,
 } from "lucide-react";
 import type { Role, Permission } from "../../types/user.types";
 import { toast } from "sonner";
 import { roleService } from "../../services/role.service";
 import { permissionService } from "../../services/permission.service";
+import { userService } from "../../services/user.service";
+import { useAppSelector } from "../../store";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { Card } from "../../components/common/Card";
@@ -411,6 +414,9 @@ const RoleForm: React.FC<RoleFormProps> = ({
 
 // Main Role Management Component
 export const RoleManagement: React.FC = () => {
+  // Get users from Redux store
+  const storeUsers = useAppSelector((state) => state.user.users);
+  
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -419,6 +425,11 @@ export const RoleManagement: React.FC = () => {
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [maxAssignmentError, setMaxAssignmentError] = useState<{ 
+    roleName: string; 
+    currentCount: number; 
+    attemptedMax: number;
+  } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -549,7 +560,54 @@ export const RoleManagement: React.FC = () => {
   const handleUpdateRole = async (data: RoleFormData & { id: string }) => {
     const { id, ...updateData } = data;
     setIsSubmitting(true);
+    
     try {
+      // Find the current role being edited
+      const currentRole = roles.find(role => role.id === id);
+      
+      // If max_assignments is being decreased, validate against current user count
+      if (updateData.max_assignments !== undefined && currentRole) {
+        const newMaxAssignments = updateData.max_assignments;
+        const currentMaxAssignments = currentRole.max_assignments || 0;
+        
+        console.log('Validating max assignments:', { 
+          newMaxAssignments, 
+          currentMaxAssignments,
+          roleId: id,
+          roleName: currentRole.name 
+        });
+        
+        // Only check if the new value is less than the current value
+        if (newMaxAssignments < currentMaxAssignments) {
+          // Get current user count for this role from Redux store
+          // Users are matched by user_type, not by role object
+          const usersWithThisRole = storeUsers.filter(
+            user => user.user_type === currentRole.name
+          );
+          const currentUserCount = usersWithThisRole.length;
+          
+          console.log('Users with this role:', {
+            count: currentUserCount,
+            users: usersWithThisRole.map(u => ({ id: u.id, name: u.name, user_type: u.user_type })),
+            totalUsersInStore: storeUsers.length
+          });
+          
+          // If current user count exceeds new max, show error
+          if (currentUserCount > newMaxAssignments) {
+            console.log('Showing error modal - cannot decrease');
+            setMaxAssignmentError({
+              roleName: currentRole.display_name || currentRole.name,
+              currentCount: currentUserCount,
+              attemptedMax: newMaxAssignments,
+            });
+            setIsSubmitting(false);
+            return;
+          } else {
+            console.log('Validation passed - can decrease');
+          }
+        }
+      }
+      
       await roleService.updateRole(id, updateData as any);
 
       // Update local state immediately
@@ -622,7 +680,7 @@ export const RoleManagement: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -801,6 +859,56 @@ export const RoleManagement: React.FC = () => {
               disabled={isSubmitting}
             >
               Delete Role
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Max Assignment Decrease Warning Modal */}
+      <Modal
+        isOpen={!!maxAssignmentError}
+        onClose={() => setMaxAssignmentError(null)}
+        title="Cannot Decrease Max Assignments"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3 p-4 bg-amber-50 rounded-lg">
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900">Current Users Exceed New Limit</h4>
+              <p className="text-sm text-gray-600">Action required before decreasing.</p>
+            </div>
+          </div>
+          
+          {maxAssignmentError && (
+            <div className="text-sm text-gray-600 space-y-2">
+              <p>
+                You cannot decrease the maximum assignments for the <strong>{maxAssignmentError.roleName}</strong> role 
+                to <strong>{maxAssignmentError.attemptedMax}</strong> because there are currently{' '}
+                <strong>{maxAssignmentError.currentCount}</strong> user{maxAssignmentError.currentCount !== 1 ? 's' : ''} assigned to this role.
+              </p>
+              <p>
+                To decrease the maximum assignments, you must first:
+              </p>
+              <ul className="list-disc list-inside pl-2 space-y-1">
+                <li>Remove users from this role, or</li>
+                <li>Reassign users to a different role</li>
+              </ul>
+              <p>
+                Once the number of assigned users is equal to or less than <strong>{maxAssignmentError.attemptedMax}</strong>, 
+                you will be able to update the maximum assignments value.
+              </p>
+            </div>
+          )}
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setMaxAssignmentError(null)}
+            >
+              Close
             </Button>
           </div>
         </div>
