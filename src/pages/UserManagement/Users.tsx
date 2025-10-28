@@ -66,6 +66,7 @@ const userCreateSchema = z.object({
 const userUpdateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
   mobile: z.string().optional(),
+  user_type: z.enum(['super_admin', 'admin', 'billing_manager', 'noc_manager', 'support_staff', 'reseller_admin', 'sub_reseller_admin', 'field_staff', 'accountant', 'customer_service', 'technical_support']).optional(),
   employee_id: z.string().optional(),
   department: z.string().optional(),
   designation: z.string().optional(),
@@ -293,6 +294,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
     defaultValues: user ? {
       name: user.name,
       mobile: user.mobile || '',
+      user_type: user.user_type,
       employee_id: user.employee_id || '',
       department: user.department || '',
       designation: user.designation || '',
@@ -338,6 +340,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
       reset({
         name: user.name,
         mobile: user.mobile || '',
+        user_type: user.user_type,
         employee_id: user.employee_id || '',
         designation: user.designation || '',
         department: user.department || '',
@@ -437,41 +440,51 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
               error={(errors as any).password_confirm?.message}
               disabled={loading}
             />
+          </>
+        )}
+        
+        {/* Role dropdown - shown in both create and edit modes */}
+        <div className={!isEditing ? '' : 'md:col-span-2'}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Role
+          </label>
+          <select
+            {...register('user_type')}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+          >
+            <option value="field_staff">Field Staff</option>
+            <option value="support_staff">Support Staff</option>
+            <option value="noc_manager">NOC Manager</option>
+            <option value="billing_manager">Billing Manager</option>
+            <option value="reseller_admin">Reseller Administrator</option>
+            <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
+            <option value="admin">Administrator</option>
+            <option value="super_admin">Super Administrator</option>
+            <option value="accountant">Accountant</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="technical_support">Technical Support</option>
+          </select>
+          {(errors as any).user_type && (
+            <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
+          )}
+          {watch('user_type') && !roles.find(r => r.name === watch('user_type')) && (
+            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800 flex items-center">
+                <Shield className="w-4 h-4 mr-2" />
+                <span>
+                  Warning: The selected role is not configured in Role Management. 
+                  {isEditing ? ' The role change may not have proper permissions.' : ' Please create this role first to set permissions and limits.'}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {!isEditing && (
+          <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role
-              </label>
-              <select
-                {...register('user_type')}
-                disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              >
-                <option value="field_staff">Field Staff</option>
-                <option value="support_staff">Support Staff</option>
-                <option value="noc_manager">NOC Manager</option>
-                <option value="billing_manager">Billing Manager</option>
-                <option value="reseller_admin">Reseller Administrator</option>
-                <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
-                <option value="admin">Administrator</option>
-                <option value="super_admin">Super Administrator</option>
-                <option value="accountant">Accountant</option>
-                <option value="customer_service">Customer Service</option>
-                <option value="technical_support">Technical Support</option>
-              </select>
-              {(errors as any).user_type && (
-                <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
-              )}
-              {!isEditing && watch('user_type') && !roles.find(r => r.name === watch('user_type')) && (
-                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800 flex items-center">
-                    <Shield className="w-4 h-4 mr-2" />
-                    <span>
-                      Warning: The selected role is not configured in Role Management. 
-                      Please create this role first to set permissions and limits.
-                    </span>
-                  </p>
-                </div>
-              )}
+              {/* Empty div for grid spacing when in create mode */}
             </div>
           </>
         )}
@@ -705,6 +718,39 @@ export const Users: React.FC = () => {
 
   const handleUpdateUser = async (data: UserUpdate & { id: string }) => {
     const { id, ...updateData } = data;
+    
+    // Check if role is being changed and validate role limits
+    if (updateData.user_type) {
+      const user = users.find(u => u.id === id);
+      const oldUserType = user?.user_type;
+      const newUserType = updateData.user_type;
+      
+      // Only check if the role is actually changing
+      if (oldUserType !== newUserType) {
+        const selectedRole = roles.find(r => r.name === newUserType);
+        
+        // Check if role exists in Role Management
+        if (!selectedRole) {
+          toast.error('This role is not configured in Role Management. Please create it first.');
+          return;
+        }
+        
+        // Check role limits
+        if (selectedRole.max_assignments !== undefined && selectedRole.max_assignments !== null) {
+          // Count users with the new role (excluding the current user)
+          const currentCount = users.filter(u => u.user_type === newUserType && u.id !== id).length;
+          
+          if (currentCount >= selectedRole.max_assignments) {
+            setRoleLimitError({
+              role: selectedRole.display_name,
+              limit: selectedRole.max_assignments,
+            });
+            return;
+          }
+        }
+      }
+    }
+    
     setIsSubmitting(true);
     try {
       const result = await updateUser({ id, ...updateData });
