@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, MoreVertical, Edit3, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Edit3, Trash2, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
@@ -7,12 +7,17 @@ import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { Modal } from "../../components/common/Modal";
 import type { FC } from "react";
 import { Zone } from "./types";
+import { useDebounce } from "../../hooks/useDebounce";
 
 export const ZoneList: FC = () => {
   const navigate = useNavigate();
   const [loading] = useState(false);
   const [openMenu, setMenuOpen] = useState<string | null>(null);
   const [deletingZone, setDeletingZone] = useState<Zone | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(10);
 
   // Placeholder zones - replace with API data when service/hook is available
   const [zones] = useState<Zone[]>([
@@ -54,12 +59,52 @@ export const ZoneList: FC = () => {
     },
   ]);
 
+  // Filter & paginate
+  const filteredZones = zones.filter((z) => {
+    const q = (debouncedSearch || "").toLowerCase().trim();
+    if (!q) return true;
+    return [
+      z.zone_name,
+      z.sdt_id,
+      z.parent,
+      z.email,
+      z.mobile1,
+      z.mobile2,
+      z.contact_name,
+      z.contact_number,
+      z.login_id,
+      z.address,
+      z.district,
+      z.thana,
+    ]
+      .filter(Boolean)
+      .some((v) => v!.toLowerCase().includes(q));
+  });
+
+  const totalItems = filteredZones.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+
+  // Ensure current page is within bounds when search/perPage changes
+  React.useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [currentPage, totalPages]);
+
+  React.useEffect(() => {
+    // Reset to first page when search term changes
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  const paginatedZones = filteredZones.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
   return (
     <div className="space-y-6 pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Zones & SDT — Zone List
+            Zones / SDT — Zone List
           </h1>
           <p className="text-gray-600 mt-1">
             View and manage zones. Create a new zone using the top link.
@@ -75,12 +120,46 @@ export const ZoneList: FC = () => {
         </div>
       </div>
 
+      {/* Search */}
+      <Card>
+        <div className="flex items-center space-x-4">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search zones..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Per page</label>
+            <select
+              value={perPage}
+              onChange={(e) => {
+                setPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-xl"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        </div>
+      </Card>
+
       <Card>
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <LoadingSpinner size="lg" message="Loading zones..." />
           </div>
-        ) : zones.length === 0 ? (
+        ) : totalItems === 0 ? (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               No zones found
@@ -153,7 +232,7 @@ export const ZoneList: FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {zones.map((z) => (
+                  {paginatedZones.map((z) => (
                     <tr
                       key={z.id}
                       className="hover:bg-gray-50 transition-colors"
@@ -244,6 +323,54 @@ export const ZoneList: FC = () => {
                   ))}
                 </tbody>
               </table>
+              {/* Pagination controls */}
+              <div className="flex items-center justify-between py-3 px-2">
+                <div className="text-sm text-gray-600">
+                  Showing{" "}
+                  {totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1} -{" "}
+                  {Math.min(currentPage * perPage, totalItems)} of {totalItems}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+
+                  {/* Simple page numbers - show up to 5 pages around current */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .slice(
+                      Math.max(0, currentPage - 3),
+                      Math.min(totalPages, currentPage + 2)
+                    )
+                    .map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        className={`px-3 py-1 rounded-md border ${
+                          p === currentPage
+                            ? "bg-gray-200 font-medium"
+                            : "bg-white hover:bg-gray-50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

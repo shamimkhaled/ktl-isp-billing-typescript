@@ -52,7 +52,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "zones",
-    label: "Zones & SDT",
+    label: "Zones / SDT",
     icon: MapPin,
     path: "/zones",
     gradient: "from-emerald-400 to-green-400",
