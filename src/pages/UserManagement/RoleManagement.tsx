@@ -79,10 +79,11 @@ interface RoleRowProps {
   role: Role;
   onEdit: (role: Role) => void;
   onDelete: (role: Role) => void;
+  isMenuOpen: boolean;
+  onToggleMenu: (roleId: string) => void;
 }
 
-const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
-  const [showMenu, setShowMenu] = useState(false);
+const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete, isMenuOpen, onToggleMenu }) => {
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
@@ -130,17 +131,17 @@ const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
       <td className="px-6 py-4">
         <div className="relative">
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => onToggleMenu(role.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
-          {showMenu && (
+          {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
               <button
                 onClick={() => {
                   onEdit(role);
-                  setShowMenu(false);
+                  onToggleMenu(role.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
@@ -150,7 +151,7 @@ const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
               <button
                 onClick={() => {
                   onDelete(role);
-                  setShowMenu(false);
+                  onToggleMenu(role.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
               >
@@ -423,6 +424,7 @@ export const RoleManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [maxAssignmentError, setMaxAssignmentError] = useState<{ 
@@ -777,6 +779,8 @@ export const RoleManagement: React.FC = () => {
                     role={role}
                     onEdit={setEditingRole}
                     onDelete={setDeletingRole}
+                    isMenuOpen={openMenuId === role.id}
+                    onToggleMenu={(roleId) => setOpenMenuId(openMenuId === roleId ? null : roleId)}
                   />
                 ))}
               </tbody>

@@ -90,10 +90,11 @@ interface UserRowProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onViewProfile: (user: User) => void;
+  isMenuOpen: boolean;
+  onToggleMenu: (userId: string) => void;
 }
 
-const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile }) => {
-  const [showMenu, setShowMenu] = useState(false);
+const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile, isMenuOpen, onToggleMenu }) => {
 
   // Friendly label mapping for role types (used inline below)
 
@@ -222,17 +223,17 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile
   <td className="px-3 py-2">
         <div className="relative">
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => onToggleMenu(user.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
-          {showMenu && (
+          {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
               <button
                 onClick={() => {
                   onEdit(user);
-                  setShowMenu(false);
+                  onToggleMenu(user.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
@@ -242,7 +243,7 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile
               <button
                 onClick={() => {
                   onDelete(user);
-                  setShowMenu(false);
+                  onToggleMenu(user.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
               >
@@ -252,7 +253,7 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile
               <button
                 onClick={() => {
                   onViewProfile(user);
-                  setShowMenu(false);
+                  onToggleMenu(user.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
@@ -640,6 +641,7 @@ export const Users: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -903,6 +905,8 @@ export const Users: React.FC = () => {
                     onEdit={setEditingUser}
                     onDelete={setDeletingUser}
                     onViewProfile={setViewingUser}
+                    isMenuOpen={openMenuId === user.id}
+                    onToggleMenu={(userId) => setOpenMenuId(openMenuId === userId ? null : userId)}
                   />
                 ))}
               </tbody>
@@ -1105,7 +1109,29 @@ export const Users: React.FC = () => {
                     {viewingUser.status}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {viewingUser.role?.name || 'No Role'}
+                    {(() => {
+                      // Try to get role display name from roles array first
+                      const role = roles.find(r => r.name === viewingUser.user_type);
+                      if (role) {
+                        return role.display_name;
+                      }
+                      
+                      // Fallback to mapping if role not found in roles array
+                      const roleMap: Record<User['user_type'], string> = {
+                        super_admin: 'Super Administrator',
+                        admin: 'Administrator',
+                        billing_manager: 'Billing Manager',
+                        noc_manager: 'NOC Manager',
+                        support_staff: 'Support Staff',
+                        reseller_admin: 'Reseller Administrator',
+                        sub_reseller_admin: 'Sub-Reseller Administrator',
+                        field_staff: 'Field Staff',
+                        accountant: 'Accountant',
+                        customer_service: 'Customer Service',
+                        technical_support: 'Technical Support',
+                      };
+                      return roleMap[viewingUser.user_type] || viewingUser.user_type;
+                    })()}
                   </span>
                 </div>
               </div>
