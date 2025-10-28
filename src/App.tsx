@@ -39,7 +39,7 @@ const Report = lazy(() =>
   import("./pages/Report").then((m) => ({ default: m.Report }))
 );
 const OrganizationSettings = lazy(() =>
-  import("./pages/OrganizationSettings").then((m) => ({
+  import("./pages/Settings/OrganizationSettings").then((m) => ({
     default: m.OrganizationSettings,
   }))
 );

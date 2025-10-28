@@ -12,13 +12,13 @@ import {
   Mail,
   Phone,
 } from 'lucide-react';
-import { organizationService } from '../services/organization.service';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
-import { Card } from '../components/common/Card';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { formatDate } from '../utils/helpers';
-import type { Organization, BillingSettings, SyncSettings } from '../types/user.types';
+import { organizationService } from '../../services/organization.service';
+import { Button } from '../../components/common/Button';
+import { Input } from '../../components/common/Input';
+import { Card } from '../../components/common/Card';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { formatDate } from '../../utils/helpers';
+import type { Organization, BillingSettings, SyncSettings } from '../../types/user.types';
 import { toast } from 'sonner';
 
 // Organization form validation schemas
@@ -1123,7 +1123,7 @@ export const OrganizationSettings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Organization Settings</h1>
