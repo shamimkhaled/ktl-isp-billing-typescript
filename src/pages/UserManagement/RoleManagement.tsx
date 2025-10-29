@@ -661,6 +661,21 @@ export const RoleManagement: React.FC = () => {
   const handleDeleteRole = async () => {
     if (!deletingRole) return;
 
+    // Check if any users have this role assigned
+    const usersWithThisRole = storeUsers.filter(
+      user => user.user_type === deletingRole.name
+    );
+
+    if (usersWithThisRole.length > 0) {
+      // Show error - cannot delete role with assigned users
+      toast.error(
+        `Cannot delete role "${deletingRole.display_name}". ${usersWithThisRole.length} user(s) are currently assigned to this role. Please reassign or remove these users first.`,
+        { duration: 5000 }
+      );
+      setDeletingRole(null);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await roleService.deleteRole(deletingRole.id);
@@ -838,43 +853,92 @@ export const RoleManagement: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <div className="flex items-center space-x-3 p-4 bg-red-50 rounded-lg">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Delete Role</h4>
-              <p className="text-sm text-gray-600">
-                This action cannot be undone.
-              </p>
-            </div>
-          </div>
+          {(() => {
+            const usersWithRole = deletingRole 
+              ? storeUsers.filter(user => user.user_type === deletingRole.name)
+              : [];
+            const hasUsers = usersWithRole.length > 0;
 
-          {deletingRole && (
-            <p className="text-sm text-gray-600">
-              Are you sure you want to delete{" "}
-              <strong>{deletingRole.display_name}</strong>? This will remove the
-              role from all users who have it assigned.
-            </p>
-          )}
+            return (
+              <>
+                <div className={`flex items-center space-x-3 p-4 rounded-lg ${hasUsers ? 'bg-yellow-50' : 'bg-red-50'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${hasUsers ? 'bg-yellow-100' : 'bg-red-100'}`}>
+                    {hasUsers ? (
+                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    ) : (
+                      <Trash2 className="w-5 h-5 text-red-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">
+                      {hasUsers ? 'Cannot Delete Role' : 'Delete Role'}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {hasUsers ? 'Users are assigned to this role' : 'This action cannot be undone'}
+                    </p>
+                  </div>
+                </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              variant="secondary"
-              onClick={() => setDeletingRole(null)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDeleteRole}
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              Delete Role
-            </Button>
-          </div>
+                {deletingRole && (
+                  <>
+                    {hasUsers ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                          Cannot delete <strong>{deletingRole.display_name}</strong> because{' '}
+                          <strong className="text-red-600">{usersWithRole.length} user(s)</strong>{' '}
+                          are currently assigned to this role.
+                        </p>
+                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-xs font-medium text-gray-700 mb-2">Assigned Users:</p>
+                          <ul className="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
+                            {usersWithRole.slice(0, 10).map(user => (
+                              <li key={user.id} className="flex items-center space-x-2">
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                <span>{user.name || user.login_id} ({user.email})</span>
+                              </li>
+                            ))}
+                            {usersWithRole.length > 10 && (
+                              <li className="text-gray-500 italic">
+                                ...and {usersWithRole.length - 10} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                        <p className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                           <strong>Tip:</strong> Please reassign these users to a different role or remove them before deleting this role.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        Are you sure you want to delete{' '}
+                        <strong>{deletingRole.display_name}</strong>?
+                      </p>
+                    )}
+                  </>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setDeletingRole(null)}
+                    disabled={isSubmitting}
+                  >
+                    {hasUsers ? 'Close' : 'Cancel'}
+                  </Button>
+                  {!hasUsers && (
+                    <Button
+                      variant="danger"
+                      onClick={handleDeleteRole}
+                      loading={isSubmitting}
+                      disabled={isSubmitting}
+                    >
+                      Delete Role
+                    </Button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </Modal>
 
