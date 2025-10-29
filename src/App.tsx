@@ -45,6 +45,9 @@ const OrganizationSettings = lazy(() =>
     default: m.OrganizationSettings,
   }))
 );
+const MainProfile = lazy(() =>
+  import("./pages/UserManagement/MainProfile").then((m) => ({ default: m.MainProfile }))
+);
 
 // Zones & SDT Components (lazy-loaded individually)
 const ZoneList = lazy(() => import("./pages/ZonesSDT/ZoneList"));
@@ -370,6 +373,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <Report />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MainProfile />
                 </Layout>
               </ProtectedRoute>
             }
