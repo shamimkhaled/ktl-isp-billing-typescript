@@ -13,6 +13,7 @@ import {
   ChevronRight,
   X,
   Ticket,
+  MessageSquare,
   Building2,
 } from "lucide-react";
 
@@ -97,6 +98,23 @@ const menuItems: MenuItem[] = [
       { label: "Ticket Summary Graph", path: "/tickets/summary" },
       { label: "Ticket Topics", path: "/tickets/topics" },
       { label: "Sales Query", path: "/tickets/sales-query" },
+    ],
+  },
+  {
+    id: "sms",
+    label: "SMS",
+    icon: MessageSquare,
+    path: "/sms",
+    gradient: "from-green-400 to-emerald-400",
+    subItems: [
+      { label: "SMS Report", path: "/sms/report" },
+      { label: "SMS Sync Report", path: "/sms/sync-report" },
+      { label: "SMS Settings", path: "/sms/settings" },
+      { label: "Message Templates", path: "/sms/templates" },
+      { label: "Send SMS", path: "/sms/send" },
+      { label: "Summary Report", path: "/sms/summary" },
+      { label: "Download Sync App", path: "/sms/download-sync-app" },
+      { label: "SMS Provider Settings", path: "/sms/provider-settings" },
     ],
   },
   {

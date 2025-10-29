@@ -103,7 +103,7 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 relative overflow-hidden flex items-center justify-center">
+    <div className="py-8 min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 relative overflow-hidden flex items-center justify-center">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
@@ -260,7 +260,7 @@ export const Login: React.FC = () => {
         </Card>
 
         {/* System Info */}
-        <div className="mt-8 text-center text-gray-600 text-xs">
+        <div className="mt-8 text-center text-white/60 text-xs">
           <p>KTL ISP Billing Management System v1.0</p>
           <p>© 2025 All rights reserved. Powered by <strong>Alawaf.</strong> </p>
         </div>

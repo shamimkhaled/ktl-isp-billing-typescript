@@ -109,6 +109,42 @@ const SalesQuery = lazy(() =>
   import("./pages/Tickets/SalesQuery").then((m) => ({ default: m.SalesQuery }))
 );
 
+// SMS Components
+const SMSReport = lazy(() =>
+  import("./pages/SMS/SMSReport").then((m) => ({ default: m.SMSReport }))
+);
+const SMSSyncReport = lazy(() =>
+  import("./pages/SMS/SMSSyncReport").then((m) => ({
+    default: m.SMSSyncReport,
+  }))
+);
+const SMSSettings = lazy(() =>
+  import("./pages/SMS/SMSSettings").then((m) => ({ default: m.SMSSettings }))
+);
+const MessageTemplates = lazy(() =>
+  import("./pages/SMS/MessageTemplates").then((m) => ({
+    default: m.MessageTemplates,
+  }))
+);
+const SendSMS = lazy(() =>
+  import("./pages/SMS/SendSMS").then((m) => ({ default: m.SendSMS }))
+);
+const SummaryReport = lazy(() =>
+  import("./pages/SMS/SummaryReport").then((m) => ({
+    default: m.SummaryReport,
+  }))
+);
+const DownloadSyncApp = lazy(() =>
+  import("./pages/SMS/DownloadSyncApp").then((m) => ({
+    default: m.DownloadSyncApp,
+  }))
+);
+const SMSProviderSettings = lazy(() =>
+  import("./pages/SMS/SMSProviderSettings").then((m) => ({
+    default: m.SMSProviderSettings,
+  }))
+);
+
 //app
 // Create QueryClient
 const queryClient = new QueryClient();
@@ -429,6 +465,87 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <SalesQuery />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* SMS Routes */}
+          <Route
+            path="/sms/report"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SMSReport />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/sync-report"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SMSSyncReport />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SMSSettings />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/templates"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessageTemplates />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/send"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SendSMS />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/summary"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SummaryReport />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/download-sync-app"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DownloadSyncApp />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms/provider-settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SMSProviderSettings />
                 </Layout>
               </ProtectedRoute>
             }
