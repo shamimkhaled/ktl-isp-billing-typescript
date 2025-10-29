@@ -333,7 +333,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Max Assignments (Optional)
+            Max User Assignment
           </label>
           <input
             type="number"
@@ -341,7 +341,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
             disabled={loading}
             min="0"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="Unlimited"
+            placeholder="0"
           />
           {errors.max_assignments && (
             <p className="text-sm text-red-600 mt-1">
@@ -451,27 +451,66 @@ export const RoleManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // Check localStorage first for saved roles
+      // Load permissions from API first
+      const permissionsResponse = await permissionService.getPermissions();
+      const loadedPermissions = permissionsResponse.results;
+      setPermissions(loadedPermissions);
+      
+      // Check localStorage for saved roles
       const savedRoles = localStorage.getItem('demo_roles');
       if (savedRoles) {
-        setRoles(JSON.parse(savedRoles));
+        const parsedRoles: Role[] = JSON.parse(savedRoles);
+        
+        // Migrate roles: populate permissions array from permission_ids if empty
+        const migratedRoles = parsedRoles.map(role => {
+          if (role.permissions.length === 0 && role.permission_ids.length > 0) {
+            // Populate permissions from IDs
+            return {
+              ...role,
+              permissions: loadedPermissions.filter(p => role.permission_ids.includes(p.id))
+            };
+          }
+          return role;
+        });
+        
+        // Save migrated roles back to localStorage
+        if (JSON.stringify(migratedRoles) !== JSON.stringify(parsedRoles)) {
+          localStorage.setItem('demo_roles', JSON.stringify(migratedRoles));
+        }
+        
+        setRoles(migratedRoles);
       } else {
         setRoles([]);
       }
-      
-      // Load permissions from API
-      const permissionsResponse = await permissionService.getPermissions();
-      setPermissions(permissionsResponse.results);
     } catch (error: any) {
       console.warn('Failed to load permissions from API, using mock data:', error);
+      const mockPerms = getMockPermissions();
+      setPermissions(mockPerms);
+      
       // Fallback to mock data for development
       const savedRoles = localStorage.getItem('demo_roles');
       if (savedRoles) {
-        setRoles(JSON.parse(savedRoles));
+        const parsedRoles: Role[] = JSON.parse(savedRoles);
+        
+        // Migrate roles with mock permissions
+        const migratedRoles = parsedRoles.map(role => {
+          if (role.permissions.length === 0 && role.permission_ids.length > 0) {
+            return {
+              ...role,
+              permissions: mockPerms.filter(p => role.permission_ids.includes(p.id))
+            };
+          }
+          return role;
+        });
+        
+        if (JSON.stringify(migratedRoles) !== JSON.stringify(parsedRoles)) {
+          localStorage.setItem('demo_roles', JSON.stringify(migratedRoles));
+        }
+        
+        setRoles(migratedRoles);
       } else {
         setRoles([]);
       }
-      setPermissions(getMockPermissions());
       toast.error("Using demo data - API not available");
     } finally {
       setLoading(false);
@@ -517,6 +556,11 @@ export const RoleManagement: React.FC = () => {
     try {
       const newRole = await roleService.createRole(data as any);
 
+      // Map permission IDs to full permission objects
+      const rolePermissions = permissions.filter(p => 
+        (data.permission_ids || []).includes(p.id)
+      );
+
       // Update local state immediately with the new role
       const roleToAdd: Role = {
         id: newRole.id || `role-${Date.now()}`,
@@ -528,7 +572,7 @@ export const RoleManagement: React.FC = () => {
         is_system_role: false,
         can_assign_roles: data.can_assign_roles || false,
         max_assignments: data.max_assignments,
-        permissions: [],
+        permissions: rolePermissions, // Include full permission objects
         permission_ids: data.permission_ids || [],
         users_count: "0",
         created_at: new Date().toISOString(),
@@ -541,6 +585,11 @@ export const RoleManagement: React.FC = () => {
       setShowCreateModal(false);
       toast.success("Role created successfully");
     } catch (error: any) {
+      // Map permission IDs to full permission objects for demo mode too
+      const rolePermissions = permissions.filter(p => 
+        (data.permission_ids || []).includes(p.id)
+      );
+
       // If API fails, still add to local state for demo purposes
       const roleToAdd: Role = {
         id: `role-${Date.now()}`,
@@ -552,7 +601,7 @@ export const RoleManagement: React.FC = () => {
         is_system_role: false,
         can_assign_roles: data.can_assign_roles || false,
         max_assignments: data.max_assignments,
-        permissions: [],
+        permissions: rolePermissions, // Include full permission objects
         permission_ids: data.permission_ids || [],
         users_count: '0',
         created_at: new Date().toISOString(),
@@ -573,10 +622,10 @@ export const RoleManagement: React.FC = () => {
     const { id, ...updateData } = data;
     setIsSubmitting(true);
     
+    // Find the current role being edited (moved outside try-catch for accessibility)
+    const currentRole = roles.find(role => role.id === id);
+    
     try {
-      // Find the current role being edited
-      const currentRole = roles.find(role => role.id === id);
-      
       // If max_assignments is being decreased, validate against current user count
       if (updateData.max_assignments !== undefined && currentRole) {
         const newMaxAssignments = updateData.max_assignments;
@@ -622,12 +671,18 @@ export const RoleManagement: React.FC = () => {
       
       await roleService.updateRole(id, updateData as any);
 
+      // Map permission IDs to full permission objects if permission_ids changed
+      const updatedPermissions = updateData.permission_ids 
+        ? permissions.filter(p => updateData.permission_ids!.includes(p.id))
+        : currentRole?.permissions || [];
+
       // Update local state immediately
       const updatedRoles = roles.map(role =>
         role.id === id
           ? {
               ...role,
               ...updateData,
+              permissions: updatedPermissions, // Update permissions array
               updated_at: new Date().toISOString(),
             }
           : role
@@ -638,12 +693,18 @@ export const RoleManagement: React.FC = () => {
       setEditingRole(null);
       toast.success("Role updated successfully");
     } catch (error: any) {
+      // Map permission IDs to full permission objects for demo mode too
+      const updatedPermissions = updateData.permission_ids 
+        ? permissions.filter(p => updateData.permission_ids!.includes(p.id))
+        : currentRole?.permissions || [];
+
       // If API fails, still update local state for demo purposes
       const updatedRoles = roles.map(role =>
         role.id === id
           ? {
               ...role,
               ...updateData,
+              permissions: updatedPermissions, // Update permissions array
               updated_at: new Date().toISOString(),
             }
           : role
