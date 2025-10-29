@@ -212,6 +212,10 @@ export const ZoneList: FC = () => {
           prev.map((z) => (z.id === editingZone.id ? { ...z, ...data } : z))
         );
         toast.success("Zone updated successfully");
+        // If there was an active search, clear it so updated zone becomes visible
+        setSearchTerm("");
+        // Ensure we show the first page so users see the updated item
+        setCurrentPage(1);
       } else {
         // create
         const newZone: Zone = {
@@ -235,7 +239,8 @@ export const ZoneList: FC = () => {
         };
         setZones((prev) => [newZone, ...prev]);
         toast.success("Zone created successfully");
-        // Reset to first page to show new data
+        // Clear search and reset to first page so the new zone is visible immediately
+        setSearchTerm("");
         setCurrentPage(1);
       }
 
