@@ -77,7 +77,7 @@ const menuItems: MenuItem[] = [
     id: "corporate",
     label: "CORPORATE",
     icon: Building2,
-    path: "/corporate",
+    path: "/corporate/customers",
     gradient: "from-rose-400 to-red-400",
     subItems: [
       { label: "Add Customer", path: "/corporate/add-customer" },
@@ -105,7 +105,7 @@ const menuItems: MenuItem[] = [
     id: "sms",
     label: "SMS",
     icon: MessageSquare,
-    path: "/sms",
+    path: "/sms/send",
     gradient: "from-green-400 to-emerald-400",
     subItems: [
       { label: "SMS Report", path: "/sms/report" },
@@ -122,7 +122,7 @@ const menuItems: MenuItem[] = [
     id: "vendor",
     label: "VENDOR",
     icon: Briefcase,
-    path: "/vendor",
+    path: "/vendor/tickets/my",
     gradient: "from-purple-400 to-indigo-400",
     subItems: [
       { label: "My Payment History", path: "/vendor/payments-history" },
@@ -135,7 +135,7 @@ const menuItems: MenuItem[] = [
     id: "ftth",
     label: "FTTH",
     icon: Network,
-    path: "/ftth",
+    path: "/ftth/list-sw-olt",
     gradient: "from-teal-400 to-cyan-400",
     subItems: [
       { label: "Network Diagram", path: "/ftth/network-diagram" },
@@ -287,60 +287,62 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
 
                       <div className="relative">
                         {item.path ? (
-                          <Link
-                            to={item.path}
-                            className="flex items-center justify-between w-full p-3 sm:p-4 text-left"
+                          <div
+                            onClick={() => item.subItems && toggleMenu(item.id)}
                           >
-                            <div className="flex items-center space-x-3 sm:space-x-4">
-                              <div
-                                className={
-                                  `w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ` +
-                                  (isItemActive
-                                    ? `bg-gradient-to-br ${item.gradient} text-white`
-                                    : themeMode === "dark"
-                                    ? "bg-white/10 text-white/80 group-hover:bg-white/20"
-                                    : "bg-gray-100 text-gray-800 group-hover:bg-gray-200")
-                                }
-                              >
-                                <Icon
-                                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                                    themeMode === "dark" ? "" : "text-gray-800"
-                                  }`}
-                                />
+                            <Link
+                              to={item.path}
+                              className="flex items-center justify-between w-full p-3 sm:p-4 text-left"
+                            >
+                              <div className="flex items-center space-x-3 sm:space-x-4">
+                                <div
+                                  className={
+                                    `w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ` +
+                                    (isItemActive
+                                      ? `bg-gradient-to-br ${item.gradient} text-white`
+                                      : themeMode === "dark"
+                                      ? "bg-white/10 text-white/80 group-hover:bg-white/20"
+                                      : "bg-gray-100 text-gray-800 group-hover:bg-gray-200")
+                                  }
+                                >
+                                  <Icon
+                                    className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                                      themeMode === "dark"
+                                        ? ""
+                                        : "text-gray-800"
+                                    }`}
+                                  />
+                                </div>
+                                <span
+                                  className={
+                                    `font-semibold transition-colors text-sm sm:text-base ` +
+                                    (isItemActive
+                                      ? "text-black"
+                                      : themeMode === "dark"
+                                      ? "text-white/80 group-hover:text-white"
+                                      : "text-gray-900 group-hover:text-gray-800")
+                                  }
+                                >
+                                  {item.label}
+                                </span>
                               </div>
-                              <span
-                                className={
-                                  `font-semibold transition-colors text-sm sm:text-base ` +
-                                  (isItemActive
-                                    ? "text-black"
-                                    : themeMode === "dark"
-                                    ? "text-white/80 group-hover:text-white"
-                                    : "text-gray-900 group-hover:text-gray-800")
-                                }
-                              >
-                                {item.label}
-                              </span>
-                            </div>
-                            {item.subItems && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  toggleMenu(item.id);
-                                }}
-                                className={`p-1 transition-colors ${
-                                  themeMode === "dark"
-                                    ? "text-white/60 hover:text-white"
-                                    : "text-gray-500 hover:text-gray-800"
-                                }`}
-                              >
-                                {isExpanded ? (
-                                  <ChevronDown className="w-4 h-4" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4" />
-                                )}
-                              </button>
-                            )}
-                          </Link>
+                              {item.subItems && (
+                                <div
+                                  className={`p-1 transition-colors ${
+                                    themeMode === "dark"
+                                      ? "text-white/60 hover:text-white"
+                                      : "text-gray-500 hover:text-gray-800"
+                                  }`}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-4 h-4" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4" />
+                                  )}
+                                </div>
+                              )}
+                            </Link>
+                          </div>
                         ) : (
                           <button
                             onClick={() => item.subItems && toggleMenu(item.id)}
