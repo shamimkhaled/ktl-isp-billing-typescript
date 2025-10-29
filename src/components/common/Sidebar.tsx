@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Ticket,
   Building2,
 } from "lucide-react";
 
@@ -81,6 +82,21 @@ const menuItems: MenuItem[] = [
       { label: "List Customer", path: "/corporate/customers" },
       { label: "Packages", path: "/corporate/packages" },
       { label: "All Invoice", path: "/corporate/invoices" },
+    ],
+  },
+  {
+    id: "tickets",
+    label: "TICKETS",
+    icon: Ticket,
+    path: "/tickets",
+    gradient: "from-indigo-400 to-blue-400",
+    subItems: [
+      { label: "List All Tickets", path: "/tickets" },
+      { label: "List My Ticket", path: "/tickets/my" },
+      { label: "Create Ticket", path: "/tickets/create" },
+      { label: "Ticket Summary Graph", path: "/tickets/summary" },
+      { label: "Ticket Topics", path: "/tickets/topics" },
+      { label: "Sales Query", path: "/tickets/sales-query" },
     ],
   },
   {

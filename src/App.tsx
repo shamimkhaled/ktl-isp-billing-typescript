@@ -83,6 +83,31 @@ const Packages = lazy(() =>
 const Invoices = lazy(() =>
   import("./pages/Corporate/Invoices").then((m) => ({ default: m.Invoices }))
 );
+// Tickets Components
+const AllTickets = lazy(() =>
+  import("./pages/Tickets/AllTickets").then((m) => ({ default: m.AllTickets }))
+);
+const MyTickets = lazy(() =>
+  import("./pages/Tickets/MyTickets").then((m) => ({ default: m.MyTickets }))
+);
+const CreateTicket = lazy(() =>
+  import("./pages/Tickets/CreateTicket").then((m) => ({
+    default: m.CreateTicket,
+  }))
+);
+const TicketSummary = lazy(() =>
+  import("./pages/Tickets/TicketSummary").then((m) => ({
+    default: m.TicketSummary,
+  }))
+);
+const TicketTopics = lazy(() =>
+  import("./pages/Tickets/TicketTopics").then((m) => ({
+    default: m.TicketTopics,
+  }))
+);
+const SalesQuery = lazy(() =>
+  import("./pages/Tickets/SalesQuery").then((m) => ({ default: m.SalesQuery }))
+);
 
 //app
 // Create QueryClient
@@ -343,6 +368,67 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <Invoices />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Tickets Routes */}
+          <Route
+            path="/tickets"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AllTickets />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/my"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyTickets />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/create"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateTicket />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/summary"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TicketSummary />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/topics"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TicketTopics />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/sales-query"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SalesQuery />
                 </Layout>
               </ProtectedRoute>
             }
