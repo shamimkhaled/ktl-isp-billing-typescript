@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Building2,
 } from "lucide-react";
 
 interface MenuItem {
@@ -45,9 +46,9 @@ const menuItems: MenuItem[] = [
     path: "/users",
     gradient: "from-purple-400 to-pink-400",
     subItems: [
-      { label: 'Users', path: '/users' },
-      { label: 'Roles', path: '/users/roles' },
-      { label: 'Permissions', path: '/users/permissions' },
+      { label: "Users", path: "/users" },
+      { label: "Roles", path: "/users/roles" },
+      { label: "Permissions", path: "/users/permissions" },
     ],
   },
   {
@@ -67,6 +68,19 @@ const menuItems: MenuItem[] = [
       { label: "SDT Coll Summ", path: "/zones/sdt-collection-summary" },
       { label: "Cust Trends", path: "/zones/customer-trends" },
       { label: "SDT Rates", path: "/zones/sdt-rates" },
+    ],
+  },
+  {
+    id: "corporate",
+    label: "CORPORATE",
+    icon: Building2,
+    path: "/corporate",
+    gradient: "from-rose-400 to-red-400",
+    subItems: [
+      { label: "Add Customer", path: "/corporate/add-customer" },
+      { label: "List Customer", path: "/corporate/customers" },
+      { label: "Packages", path: "/corporate/packages" },
+      { label: "All Invoice", path: "/corporate/invoices" },
     ],
   },
   {

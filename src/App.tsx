@@ -28,7 +28,9 @@ const Users = lazy(() =>
   import("./pages/UserManagement/Users").then((m) => ({ default: m.Users }))
 );
 const RoleManagement = lazy(() =>
-  import("./pages/UserManagement/RoleManagement").then((m) => ({ default: m.RoleManagement }))
+  import("./pages/UserManagement/RoleManagement").then((m) => ({
+    default: m.RoleManagement,
+  }))
 );
 const PermissionManagement = lazy(() =>
   import("./pages/UserManagement/PermissionManagement").then((m) => ({
@@ -49,7 +51,9 @@ const ZoneList = lazy(() => import("./pages/ZonesSDT/ZoneList"));
 const ZoneForm = lazy(() => import("./pages/ZonesSDT/ZoneForm"));
 const CreateSDT = lazy(() => import("./pages/ZonesSDT/CreateSDT"));
 const SDTList = lazy(() => import("./pages/ZonesSDT/SDTList"));
-const CustomerPayments = lazy(() => import("./pages/ZonesSDT/CustomerPayments"));
+const CustomerPayments = lazy(
+  () => import("./pages/ZonesSDT/CustomerPayments")
+);
 
 // Named ZonePayments to avoid colliding with the existing `Payment` page import above
 const ZonePayments = lazy(() => import("./pages/ZonesSDT/Payments"));
@@ -61,6 +65,24 @@ const SDTCollectionSummary = lazy(
 );
 const CustomerTrends = lazy(() => import("./pages/ZonesSDT/CustomerTrends"));
 const SDTRates = lazy(() => import("./pages/ZonesSDT/SDTRates"));
+
+// Corporate Components
+const AddCustomer = lazy(() =>
+  import("./pages/Corporate/AddCustomer").then((m) => ({
+    default: m.AddCustomer,
+  }))
+);
+const CustomerList = lazy(() =>
+  import("./pages/Corporate/CustomerList").then((m) => ({
+    default: m.CustomerList,
+  }))
+);
+const Packages = lazy(() =>
+  import("./pages/Corporate/Packages").then((m) => ({ default: m.Packages }))
+);
+const Invoices = lazy(() =>
+  import("./pages/Corporate/Invoices").then((m) => ({ default: m.Invoices }))
+);
 
 //app
 // Create QueryClient
@@ -279,6 +301,48 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <SDTRates />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Corporate Routes */}
+          <Route
+            path="/corporate/add-customer"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AddCustomer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/corporate/customers"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CustomerList />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/corporate/packages"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Packages />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/corporate/invoices"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Invoices />
                 </Layout>
               </ProtectedRoute>
             }
