@@ -56,7 +56,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "zones",
-    label: "Zones / SDT",
+    label: "Zones/SDT",
     icon: MapPin,
     path: "/zones",
     gradient: "from-emerald-400 to-green-400",
@@ -71,6 +71,35 @@ const menuItems: MenuItem[] = [
       { label: "SDT Coll Summ", path: "/zones/sdt-collection-summary" },
       { label: "Cust Trends", path: "/zones/customer-trends" },
       { label: "SDT Rates", path: "/zones/sdt-rates" },
+    ],
+  },
+  {
+    id: "home-soho",
+    label: "HOME/SOHO",
+    icon: Users,
+    path: "/home-soho/customers",
+    gradient: "from-orange-400 to-amber-400",
+    subItems: [
+      { label: "Add Customer", path: "/home-soho/add-customer" },
+      {
+        label: "Add Customer (Less Info)",
+        path: "/home-soho/add-customer-less",
+      },
+      { label: "List Customers", path: "/home-soho/customers" },
+      { label: "Customer Payments", path: "/home-soho/customer-payments" },
+      { label: "Packages", path: "/home-soho/packages" },
+      { label: "POP", path: "/home-soho/pop" },
+      { label: "Box", path: "/home-soho/box" },
+      { label: "Search Customer", path: "/home-soho/search" },
+      { label: "Session Log", path: "/home-soho/session-log" },
+      { label: "Billing Cycle", path: "/home-soho/billing-cycle" },
+      { label: "Due Report", path: "/home-soho/due-report" },
+      { label: "Import Customer", path: "/home-soho/import" },
+      { label: "New Customer List", path: "/home-soho/new-customers" },
+      { label: "UnAuthorized Customers", path: "/home-soho/unauthorized" },
+      { label: "Active Customer Count", path: "/home-soho/active-count" },
+      { label: "Inactive Customer Count", path: "/home-soho/inactive-count" },
+      { label: "New Customer Count", path: "/home-soho/new-count" },
     ],
   },
   {
@@ -259,7 +288,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
         </div>
 
         {/* Scrollable Navigation Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto my-4">
           <div className="p-4">
             <nav className="space-y-2">
               {menuItems.map((item) => {

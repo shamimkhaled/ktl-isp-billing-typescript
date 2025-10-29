@@ -156,6 +156,83 @@ const VendorCreateTicket = lazy(() =>
     default: m.VendorCreateTicket,
   }))
 );
+
+// HOME/SOHO Components
+const HomeSohoAddCustomer = lazy(() =>
+  import("./pages/HomeSoho/HomeSohoAddCustomer.tsx").then((m) => ({
+    default: m.HomeSohoAddCustomer,
+  }))
+);
+const HomeSohoAddCustomerLess = lazy(() =>
+  import("./pages/HomeSoho/HomeSohoAddCustomerLess.tsx").then((m) => ({
+    default: m.HomeSohoAddCustomerLess,
+  }))
+);
+const HomeSohoCustomerList = lazy(() =>
+  import("./pages/HomeSoho/HomeSohoCustomerList.tsx").then((m) => ({
+    default: m.HomeSohoCustomerList,
+  }))
+);
+const HomeSohoCustomerPayments = lazy(() =>
+  import("./pages/HomeSoho/CustomerPayments").then((m) => ({
+    default: m.CustomerPayments,
+  }))
+);
+const HomeSohoPackages = lazy(() =>
+  import("./pages/HomeSoho/Packages").then((m) => ({
+    default: m.Packages,
+  }))
+);
+const Pop = lazy(() =>
+  import("./pages/HomeSoho/Pop").then((m) => ({
+    default: m.Pop,
+  }))
+);
+const Box = lazy(() =>
+  import("./pages/HomeSoho/Box").then((m) => ({
+    default: m.Box,
+  }))
+);
+const SearchCustomer = lazy(() =>
+  import("./pages/HomeSoho/SearchCustomer").then((m) => ({
+    default: m.SearchCustomer,
+  }))
+);
+const SessionLog = lazy(() =>
+  import("./pages/HomeSoho/SessionLog").then((m) => ({
+    default: m.SessionLog,
+  }))
+);
+const BillingCycle = lazy(() =>
+  import("./pages/HomeSoho/BillingCycle").then((m) => ({
+    default: m.BillingCycle,
+  }))
+);
+const DueReport = lazy(() =>
+  import("./pages/HomeSoho/DueReport").then((m) => ({
+    default: m.DueReport,
+  }))
+);
+const ImportCustomer = lazy(() =>
+  import("./pages/HomeSoho/ImportCustomer").then((m) => ({
+    default: m.ImportCustomer,
+  }))
+);
+const NewCustomerList = lazy(() =>
+  import("./pages/HomeSoho/NewCustomerList").then((m) => ({
+    default: m.NewCustomerList,
+  }))
+);
+const UnauthorizedCustomers = lazy(() =>
+  import("./pages/HomeSoho/UnauthorizedCustomers").then((m) => ({
+    default: m.UnauthorizedCustomers,
+  }))
+);
+const CustomerCounts = lazy(() =>
+  import("./pages/HomeSoho/CustomerCounts").then((m) => ({
+    default: m.CustomerCounts,
+  }))
+);
 const VendorMyTickets = lazy(() =>
   import("./pages/Vendor/VendorMyTickets").then((m) => ({
     default: m.VendorMyTickets,
@@ -629,6 +706,177 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <MyInvoices />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* HOME/SOHO Routes */}
+          <Route
+            path="/home-soho/add-customer"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HomeSohoAddCustomer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/add-customer-less"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HomeSohoAddCustomerLess />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/customers"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HomeSohoCustomerList />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/customer-payments"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HomeSohoCustomerPayments />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/packages"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HomeSohoPackages />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/pop"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Pop />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/box"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Box />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/search"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SearchCustomer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/session-log"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SessionLog />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/billing-cycle"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <BillingCycle />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/due-report"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DueReport />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/import"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ImportCustomer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/new-customers"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NewCustomerList />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/unauthorized"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UnauthorizedCustomers />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/active-count"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CustomerCounts />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/inactive-count"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CustomerCounts />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-soho/new-count"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CustomerCounts />
                 </Layout>
               </ProtectedRoute>
             }
