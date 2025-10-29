@@ -454,28 +454,29 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
             disabled={loading}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
           >
-            <option value="field_staff">Field Staff</option>
-            <option value="support_staff">Support Staff</option>
-            <option value="noc_manager">NOC Manager</option>
-            <option value="billing_manager">Billing Manager</option>
-            <option value="reseller_admin">Reseller Administrator</option>
-            <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
-            <option value="admin">Administrator</option>
-            <option value="super_admin">Super Administrator</option>
-            <option value="accountant">Accountant</option>
-            <option value="customer_service">Customer Service</option>
-            <option value="technical_support">Technical Support</option>
+            <option value="" disabled>Select a role</option>
+            {roles
+              .filter(role => role.is_active) // Only show active roles
+              .sort((a, b) => a.role_level - b.role_level) // Sort by role level
+              .map(role => (
+                <option key={role.id} value={role.name}>
+                  {role.display_name}
+                  {role.max_assignments && ` (${role.max_assignments} max users)`}
+                </option>
+              ))}
+            {roles.length === 0 && (
+              <option value="" disabled>No roles available - Create roles first</option>
+            )}
           </select>
           {(errors as any).user_type && (
             <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
           )}
-          {watch('user_type') && !roles.find(r => r.name === watch('user_type')) && (
-            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800 flex items-center">
+          {roles.filter(r => r.is_active).length === 0 && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800 flex items-center">
                 <Shield className="w-4 h-4 mr-2" />
                 <span>
-                  Warning: The selected role is not configured in Role Management. 
-                  {isEditing ? ' The role change may not have proper permissions.' : ' Please create this role first to set permissions and limits.'}
+                  No active roles found. Please go to <strong>Role Management</strong> to create roles before adding users.
                 </span>
               </p>
             </div>
@@ -837,17 +838,14 @@ export const Users: React.FC = () => {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Types</option>
-                <option value="super_admin">Super Administrator</option>
-                <option value="admin">Administrator</option>
-                <option value="billing_manager">Billing Manager</option>
-                <option value="noc_manager">NOC Manager</option>
-                <option value="support_staff">Support Staff</option>
-                <option value="reseller_admin">Reseller Administrator</option>
-                <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
-                <option value="field_staff">Field Staff</option>
-                <option value="accountant">Accountant</option>
-                <option value="customer_service">Customer Service</option>
-                <option value="technical_support">Technical Support</option>
+                {roles
+                  .filter(role => role.is_active)
+                  .sort((a, b) => a.role_level - b.role_level)
+                  .map(role => (
+                    <option key={role.id} value={role.name}>
+                      {role.display_name}
+                    </option>
+                  ))}
               </select>
             </div>
             <Button
