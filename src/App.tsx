@@ -165,6 +165,28 @@ const MyInvoices = lazy(() =>
   import("./pages/Vendor/MyInvoices").then((m) => ({ default: m.MyInvoices }))
 );
 
+// FTTH Components
+const NetworkDiagram = lazy(() =>
+  import("./pages/FTTH/NetworkDiagram").then((m) => ({
+    default: m.NetworkDiagram,
+  }))
+);
+const ListSWOLT = lazy(() =>
+  import("./pages/FTTH/ListSWOLT").then((m) => ({ default: m.ListSWOLT }))
+);
+const SwitchTree = lazy(() =>
+  import("./pages/FTTH/SwitchTree").then((m) => ({ default: m.SwitchTree }))
+);
+const ColorRules = lazy(() =>
+  import("./pages/FTTH/ColorRules").then((m) => ({ default: m.ColorRules }))
+);
+const OltPorts = lazy(() =>
+  import("./pages/FTTH/OltPorts").then((m) => ({ default: m.OltPorts }))
+);
+const OltTraps = lazy(() =>
+  import("./pages/FTTH/OltTraps").then((m) => ({ default: m.OltTraps }))
+);
+
 //app
 // Create QueryClient
 const queryClient = new QueryClient();
@@ -607,6 +629,67 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <MyInvoices />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* FTTH Routes */}
+          <Route
+            path="/ftth/network-diagram"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NetworkDiagram />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ftth/list-sw-olt"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ListSWOLT />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ftth/switch-tree"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SwitchTree />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ftth/color-rules"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ColorRules />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ftth/otl-ports"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OltPorts />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ftth/otl-traps"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OltTraps />
                 </Layout>
               </ProtectedRoute>
             }

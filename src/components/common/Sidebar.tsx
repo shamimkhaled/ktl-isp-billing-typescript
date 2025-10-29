@@ -132,6 +132,21 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    id: "ftth",
+    label: "FTTH",
+    icon: Network,
+    path: "/ftth",
+    gradient: "from-teal-400 to-cyan-400",
+    subItems: [
+      { label: "Network Diagram", path: "/ftth/network-diagram" },
+      { label: "List SW/OLT", path: "/ftth/list-sw-olt" },
+      { label: "Switch Tree", path: "/ftth/switch-tree" },
+      { label: "Color Rules", path: "/ftth/color-rules" },
+      { label: "OTL Ports", path: "/ftth/otl-ports" },
+      { label: "OTL Traps", path: "/ftth/otl-traps" },
+    ],
+  },
+  {
     id: "billing",
     label: "Billing",
     icon: DollarSign,
