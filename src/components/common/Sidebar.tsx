@@ -14,6 +14,7 @@ import {
   X,
   Ticket,
   MessageSquare,
+  Briefcase,
   Building2,
 } from "lucide-react";
 
@@ -115,6 +116,19 @@ const menuItems: MenuItem[] = [
       { label: "Summary Report", path: "/sms/summary" },
       { label: "Download Sync App", path: "/sms/download-sync-app" },
       { label: "SMS Provider Settings", path: "/sms/provider-settings" },
+    ],
+  },
+  {
+    id: "vendor",
+    label: "VENDOR",
+    icon: Briefcase,
+    path: "/vendor",
+    gradient: "from-purple-400 to-indigo-400",
+    subItems: [
+      { label: "My Payment History", path: "/vendor/payments-history" },
+      { label: "Create Ticket", path: "/vendor/tickets/create" },
+      { label: "List My Ticket", path: "/vendor/tickets/my" },
+      { label: "My Invoices", path: "/vendor/invoices" },
     ],
   },
   {

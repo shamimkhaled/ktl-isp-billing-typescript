@@ -145,6 +145,26 @@ const SMSProviderSettings = lazy(() =>
   }))
 );
 
+// Vendor Components
+const MyPaymentHistory = lazy(() =>
+  import("./pages/Vendor/MyPaymentHistory").then((m) => ({
+    default: m.MyPaymentHistory,
+  }))
+);
+const VendorCreateTicket = lazy(() =>
+  import("./pages/Vendor/VendorCreateTicket").then((m) => ({
+    default: m.VendorCreateTicket,
+  }))
+);
+const VendorMyTickets = lazy(() =>
+  import("./pages/Vendor/VendorMyTickets").then((m) => ({
+    default: m.VendorMyTickets,
+  }))
+);
+const MyInvoices = lazy(() =>
+  import("./pages/Vendor/MyInvoices").then((m) => ({ default: m.MyInvoices }))
+);
+
 //app
 // Create QueryClient
 const queryClient = new QueryClient();
@@ -546,6 +566,47 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <SMSProviderSettings />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Vendor Routes */}
+          <Route
+            path="/vendor/payments-history"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyPaymentHistory />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/tickets/create"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <VendorCreateTicket />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/tickets/my"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <VendorMyTickets />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/invoices"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyInvoices />
                 </Layout>
               </ProtectedRoute>
             }
