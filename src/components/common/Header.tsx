@@ -266,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                   {user?.name || user?.login_id || 'User'}
                 </span>
                 <p className={`text-xs truncate max-w-20 lg:max-w-32 ${themeMode === 'dark' ? 'text-white/60' : 'text-gray-500'}`}>
-                  {user?.user_type ? capitalizeFirst(user.user_type) : 'User'}
+                  {user?.role?.display_name || 'User'}
                   {user?.employee_id && ` • ${user.employee_id}`}
                 </p>
               </div>

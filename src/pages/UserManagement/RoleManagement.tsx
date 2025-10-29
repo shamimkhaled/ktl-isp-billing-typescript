@@ -79,10 +79,11 @@ interface RoleRowProps {
   role: Role;
   onEdit: (role: Role) => void;
   onDelete: (role: Role) => void;
+  isMenuOpen: boolean;
+  onToggleMenu: (roleId: string) => void;
 }
 
-const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
-  const [showMenu, setShowMenu] = useState(false);
+const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete, isMenuOpen, onToggleMenu }) => {
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
@@ -130,17 +131,17 @@ const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
       <td className="px-6 py-4">
         <div className="relative">
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => onToggleMenu(role.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
-          {showMenu && (
+          {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
               <button
                 onClick={() => {
                   onEdit(role);
-                  setShowMenu(false);
+                  onToggleMenu(role.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
@@ -150,7 +151,7 @@ const RoleRow: React.FC<RoleRowProps> = ({ role, onEdit, onDelete }) => {
               <button
                 onClick={() => {
                   onDelete(role);
-                  setShowMenu(false);
+                  onToggleMenu(role.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
               >
@@ -272,8 +273,10 @@ const RoleForm: React.FC<RoleFormProps> = ({
           </label>
           <select
             {...register("name")}
-            disabled={loading}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            disabled={loading || isEditing}
+            className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+              isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+            }`}
           >
             <option value="">Select a role</option>
             <option value="super_admin">Super Administrator</option>
@@ -288,7 +291,15 @@ const RoleForm: React.FC<RoleFormProps> = ({
             <option value="customer_service">Customer Service</option>
             <option value="technical_support">Technical Support</option>
           </select>
-          {errors.name && (
+          {isEditing && (
+            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              Role name cannot be changed to maintain data integrity
+            </p>
+          )}
+          {errors.name && !isEditing && (
             <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
           )}
         </div>
@@ -322,7 +333,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Max Assignments (Optional)
+            Max User Assignment
           </label>
           <input
             type="number"
@@ -330,7 +341,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
             disabled={loading}
             min="0"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="Unlimited"
+            placeholder="0"
           />
           {errors.max_assignments && (
             <p className="text-sm text-red-600 mt-1">
@@ -423,6 +434,7 @@ export const RoleManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [maxAssignmentError, setMaxAssignmentError] = useState<{ 
@@ -439,27 +451,66 @@ export const RoleManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // Check localStorage first for saved roles
+      // Load permissions from API first
+      const permissionsResponse = await permissionService.getPermissions();
+      const loadedPermissions = permissionsResponse.results;
+      setPermissions(loadedPermissions);
+      
+      // Check localStorage for saved roles
       const savedRoles = localStorage.getItem('demo_roles');
       if (savedRoles) {
-        setRoles(JSON.parse(savedRoles));
+        const parsedRoles: Role[] = JSON.parse(savedRoles);
+        
+        // Migrate roles: populate permissions array from permission_ids if empty
+        const migratedRoles = parsedRoles.map(role => {
+          if (role.permissions.length === 0 && role.permission_ids.length > 0) {
+            // Populate permissions from IDs
+            return {
+              ...role,
+              permissions: loadedPermissions.filter(p => role.permission_ids.includes(p.id))
+            };
+          }
+          return role;
+        });
+        
+        // Save migrated roles back to localStorage
+        if (JSON.stringify(migratedRoles) !== JSON.stringify(parsedRoles)) {
+          localStorage.setItem('demo_roles', JSON.stringify(migratedRoles));
+        }
+        
+        setRoles(migratedRoles);
       } else {
         setRoles([]);
       }
-      
-      // Load permissions from API
-      const permissionsResponse = await permissionService.getPermissions();
-      setPermissions(permissionsResponse.results);
     } catch (error: any) {
       console.warn('Failed to load permissions from API, using mock data:', error);
+      const mockPerms = getMockPermissions();
+      setPermissions(mockPerms);
+      
       // Fallback to mock data for development
       const savedRoles = localStorage.getItem('demo_roles');
       if (savedRoles) {
-        setRoles(JSON.parse(savedRoles));
+        const parsedRoles: Role[] = JSON.parse(savedRoles);
+        
+        // Migrate roles with mock permissions
+        const migratedRoles = parsedRoles.map(role => {
+          if (role.permissions.length === 0 && role.permission_ids.length > 0) {
+            return {
+              ...role,
+              permissions: mockPerms.filter(p => role.permission_ids.includes(p.id))
+            };
+          }
+          return role;
+        });
+        
+        if (JSON.stringify(migratedRoles) !== JSON.stringify(parsedRoles)) {
+          localStorage.setItem('demo_roles', JSON.stringify(migratedRoles));
+        }
+        
+        setRoles(migratedRoles);
       } else {
         setRoles([]);
       }
-      setPermissions(getMockPermissions());
       toast.error("Using demo data - API not available");
     } finally {
       setLoading(false);
@@ -505,6 +556,11 @@ export const RoleManagement: React.FC = () => {
     try {
       const newRole = await roleService.createRole(data as any);
 
+      // Map permission IDs to full permission objects
+      const rolePermissions = permissions.filter(p => 
+        (data.permission_ids || []).includes(p.id)
+      );
+
       // Update local state immediately with the new role
       const roleToAdd: Role = {
         id: newRole.id || `role-${Date.now()}`,
@@ -516,7 +572,7 @@ export const RoleManagement: React.FC = () => {
         is_system_role: false,
         can_assign_roles: data.can_assign_roles || false,
         max_assignments: data.max_assignments,
-        permissions: [],
+        permissions: rolePermissions, // Include full permission objects
         permission_ids: data.permission_ids || [],
         users_count: "0",
         created_at: new Date().toISOString(),
@@ -529,6 +585,11 @@ export const RoleManagement: React.FC = () => {
       setShowCreateModal(false);
       toast.success("Role created successfully");
     } catch (error: any) {
+      // Map permission IDs to full permission objects for demo mode too
+      const rolePermissions = permissions.filter(p => 
+        (data.permission_ids || []).includes(p.id)
+      );
+
       // If API fails, still add to local state for demo purposes
       const roleToAdd: Role = {
         id: `role-${Date.now()}`,
@@ -540,7 +601,7 @@ export const RoleManagement: React.FC = () => {
         is_system_role: false,
         can_assign_roles: data.can_assign_roles || false,
         max_assignments: data.max_assignments,
-        permissions: [],
+        permissions: rolePermissions, // Include full permission objects
         permission_ids: data.permission_ids || [],
         users_count: '0',
         created_at: new Date().toISOString(),
@@ -561,10 +622,10 @@ export const RoleManagement: React.FC = () => {
     const { id, ...updateData } = data;
     setIsSubmitting(true);
     
+    // Find the current role being edited (moved outside try-catch for accessibility)
+    const currentRole = roles.find(role => role.id === id);
+    
     try {
-      // Find the current role being edited
-      const currentRole = roles.find(role => role.id === id);
-      
       // If max_assignments is being decreased, validate against current user count
       if (updateData.max_assignments !== undefined && currentRole) {
         const newMaxAssignments = updateData.max_assignments;
@@ -610,12 +671,18 @@ export const RoleManagement: React.FC = () => {
       
       await roleService.updateRole(id, updateData as any);
 
+      // Map permission IDs to full permission objects if permission_ids changed
+      const updatedPermissions = updateData.permission_ids 
+        ? permissions.filter(p => updateData.permission_ids!.includes(p.id))
+        : currentRole?.permissions || [];
+
       // Update local state immediately
       const updatedRoles = roles.map(role =>
         role.id === id
           ? {
               ...role,
               ...updateData,
+              permissions: updatedPermissions, // Update permissions array
               updated_at: new Date().toISOString(),
             }
           : role
@@ -626,12 +693,18 @@ export const RoleManagement: React.FC = () => {
       setEditingRole(null);
       toast.success("Role updated successfully");
     } catch (error: any) {
+      // Map permission IDs to full permission objects for demo mode too
+      const updatedPermissions = updateData.permission_ids 
+        ? permissions.filter(p => updateData.permission_ids!.includes(p.id))
+        : currentRole?.permissions || [];
+
       // If API fails, still update local state for demo purposes
       const updatedRoles = roles.map(role =>
         role.id === id
           ? {
               ...role,
               ...updateData,
+              permissions: updatedPermissions, // Update permissions array
               updated_at: new Date().toISOString(),
             }
           : role
@@ -648,6 +721,21 @@ export const RoleManagement: React.FC = () => {
 
   const handleDeleteRole = async () => {
     if (!deletingRole) return;
+
+    // Check if any users have this role assigned
+    const usersWithThisRole = storeUsers.filter(
+      user => user.user_type === deletingRole.name
+    );
+
+    if (usersWithThisRole.length > 0) {
+      // Show error - cannot delete role with assigned users
+      toast.error(
+        `Cannot delete role "${deletingRole.display_name}". ${usersWithThisRole.length} user(s) are currently assigned to this role. Please reassign or remove these users first.`,
+        { duration: 5000 }
+      );
+      setDeletingRole(null);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -777,6 +865,8 @@ export const RoleManagement: React.FC = () => {
                     role={role}
                     onEdit={setEditingRole}
                     onDelete={setDeletingRole}
+                    isMenuOpen={openMenuId === role.id}
+                    onToggleMenu={(roleId) => setOpenMenuId(openMenuId === roleId ? null : roleId)}
                   />
                 ))}
               </tbody>
@@ -824,43 +914,92 @@ export const RoleManagement: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <div className="flex items-center space-x-3 p-4 bg-red-50 rounded-lg">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Delete Role</h4>
-              <p className="text-sm text-gray-600">
-                This action cannot be undone.
-              </p>
-            </div>
-          </div>
+          {(() => {
+            const usersWithRole = deletingRole 
+              ? storeUsers.filter(user => user.user_type === deletingRole.name)
+              : [];
+            const hasUsers = usersWithRole.length > 0;
 
-          {deletingRole && (
-            <p className="text-sm text-gray-600">
-              Are you sure you want to delete{" "}
-              <strong>{deletingRole.display_name}</strong>? This will remove the
-              role from all users who have it assigned.
-            </p>
-          )}
+            return (
+              <>
+                <div className={`flex items-center space-x-3 p-4 rounded-lg ${hasUsers ? 'bg-yellow-50' : 'bg-red-50'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${hasUsers ? 'bg-yellow-100' : 'bg-red-100'}`}>
+                    {hasUsers ? (
+                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    ) : (
+                      <Trash2 className="w-5 h-5 text-red-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">
+                      {hasUsers ? 'Cannot Delete Role' : 'Delete Role'}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {hasUsers ? 'Users are assigned to this role' : 'This action cannot be undone'}
+                    </p>
+                  </div>
+                </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              variant="secondary"
-              onClick={() => setDeletingRole(null)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDeleteRole}
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              Delete Role
-            </Button>
-          </div>
+                {deletingRole && (
+                  <>
+                    {hasUsers ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                          Cannot delete <strong>{deletingRole.display_name}</strong> because{' '}
+                          <strong className="text-red-600">{usersWithRole.length} user(s)</strong>{' '}
+                          are currently assigned to this role.
+                        </p>
+                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-xs font-medium text-gray-700 mb-2">Assigned Users:</p>
+                          <ul className="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
+                            {usersWithRole.slice(0, 10).map(user => (
+                              <li key={user.id} className="flex items-center space-x-2">
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                <span>{user.name || user.login_id} ({user.email})</span>
+                              </li>
+                            ))}
+                            {usersWithRole.length > 10 && (
+                              <li className="text-gray-500 italic">
+                                ...and {usersWithRole.length - 10} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                        <p className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                           <strong>Tip:</strong> Please reassign these users to a different role or remove them before deleting this role.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        Are you sure you want to delete{' '}
+                        <strong>{deletingRole.display_name}</strong>?
+                      </p>
+                    )}
+                  </>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setDeletingRole(null)}
+                    disabled={isSubmitting}
+                  >
+                    {hasUsers ? 'Close' : 'Cancel'}
+                  </Button>
+                  {!hasUsers && (
+                    <Button
+                      variant="danger"
+                      onClick={handleDeleteRole}
+                      loading={isSubmitting}
+                      disabled={isSubmitting}
+                    >
+                      Delete Role
+                    </Button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </Modal>
 

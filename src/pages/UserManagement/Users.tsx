@@ -66,6 +66,7 @@ const userCreateSchema = z.object({
 const userUpdateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
   mobile: z.string().optional(),
+  user_type: z.enum(['super_admin', 'admin', 'billing_manager', 'noc_manager', 'support_staff', 'reseller_admin', 'sub_reseller_admin', 'field_staff', 'accountant', 'customer_service', 'technical_support']).optional(),
   employee_id: z.string().optional(),
   department: z.string().optional(),
   designation: z.string().optional(),
@@ -89,10 +90,11 @@ interface UserRowProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onViewProfile: (user: User) => void;
+  isMenuOpen: boolean;
+  onToggleMenu: (userId: string) => void;
 }
 
-const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile }) => {
-  const [showMenu, setShowMenu] = useState(false);
+const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile, isMenuOpen, onToggleMenu }) => {
 
   // Friendly label mapping for role types (used inline below)
 
@@ -221,17 +223,17 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile
   <td className="px-3 py-2">
         <div className="relative">
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => onToggleMenu(user.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
-          {showMenu && (
+          {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
               <button
                 onClick={() => {
                   onEdit(user);
-                  setShowMenu(false);
+                  onToggleMenu(user.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
@@ -241,7 +243,7 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile
               <button
                 onClick={() => {
                   onDelete(user);
-                  setShowMenu(false);
+                  onToggleMenu(user.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
               >
@@ -251,7 +253,7 @@ const UserRow: React.FC<UserRowProps> = ({ user, onEdit, onDelete, onViewProfile
               <button
                 onClick={() => {
                   onViewProfile(user);
-                  setShowMenu(false);
+                  onToggleMenu(user.id);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
@@ -293,6 +295,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
     defaultValues: user ? {
       name: user.name,
       mobile: user.mobile || '',
+      user_type: user.user_type,
       employee_id: user.employee_id || '',
       department: user.department || '',
       designation: user.designation || '',
@@ -338,6 +341,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
       reset({
         name: user.name,
         mobile: user.mobile || '',
+        user_type: user.user_type,
         employee_id: user.employee_id || '',
         designation: user.designation || '',
         department: user.department || '',
@@ -437,41 +441,51 @@ const UserForm: React.FC<UserFormProps> = ({ user, roles = [], onSubmit, onUpdat
               error={(errors as any).password_confirm?.message}
               disabled={loading}
             />
+          </>
+        )}
+        
+        {/* Role dropdown - shown in both create and edit modes */}
+        <div className={!isEditing ? '' : 'md:col-span-2'}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Role
+          </label>
+          <select
+            {...register('user_type')}
+            disabled={loading}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+          >
+            <option value="field_staff">Field Staff</option>
+            <option value="support_staff">Support Staff</option>
+            <option value="noc_manager">NOC Manager</option>
+            <option value="billing_manager">Billing Manager</option>
+            <option value="reseller_admin">Reseller Administrator</option>
+            <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
+            <option value="admin">Administrator</option>
+            <option value="super_admin">Super Administrator</option>
+            <option value="accountant">Accountant</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="technical_support">Technical Support</option>
+          </select>
+          {(errors as any).user_type && (
+            <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
+          )}
+          {watch('user_type') && !roles.find(r => r.name === watch('user_type')) && (
+            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800 flex items-center">
+                <Shield className="w-4 h-4 mr-2" />
+                <span>
+                  Warning: The selected role is not configured in Role Management. 
+                  {isEditing ? ' The role change may not have proper permissions.' : ' Please create this role first to set permissions and limits.'}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {!isEditing && (
+          <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role
-              </label>
-              <select
-                {...register('user_type')}
-                disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              >
-                <option value="field_staff">Field Staff</option>
-                <option value="support_staff">Support Staff</option>
-                <option value="noc_manager">NOC Manager</option>
-                <option value="billing_manager">Billing Manager</option>
-                <option value="reseller_admin">Reseller Administrator</option>
-                <option value="sub_reseller_admin">Sub-Reseller Administrator</option>
-                <option value="admin">Administrator</option>
-                <option value="super_admin">Super Administrator</option>
-                <option value="accountant">Accountant</option>
-                <option value="customer_service">Customer Service</option>
-                <option value="technical_support">Technical Support</option>
-              </select>
-              {(errors as any).user_type && (
-                <p className="text-sm text-red-600 mt-1">{(errors as any).user_type.message}</p>
-              )}
-              {!isEditing && watch('user_type') && !roles.find(r => r.name === watch('user_type')) && (
-                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800 flex items-center">
-                    <Shield className="w-4 h-4 mr-2" />
-                    <span>
-                      Warning: The selected role is not configured in Role Management. 
-                      Please create this role first to set permissions and limits.
-                    </span>
-                  </p>
-                </div>
-              )}
+              {/* Empty div for grid spacing when in create mode */}
             </div>
           </>
         )}
@@ -627,6 +641,7 @@ export const Users: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -705,6 +720,39 @@ export const Users: React.FC = () => {
 
   const handleUpdateUser = async (data: UserUpdate & { id: string }) => {
     const { id, ...updateData } = data;
+    
+    // Check if role is being changed and validate role limits
+    if (updateData.user_type) {
+      const user = users.find(u => u.id === id);
+      const oldUserType = user?.user_type;
+      const newUserType = updateData.user_type;
+      
+      // Only check if the role is actually changing
+      if (oldUserType !== newUserType) {
+        const selectedRole = roles.find(r => r.name === newUserType);
+        
+        // Check if role exists in Role Management
+        if (!selectedRole) {
+          toast.error('This role is not configured in Role Management. Please create it first.');
+          return;
+        }
+        
+        // Check role limits
+        if (selectedRole.max_assignments !== undefined && selectedRole.max_assignments !== null) {
+          // Count users with the new role (excluding the current user)
+          const currentCount = users.filter(u => u.user_type === newUserType && u.id !== id).length;
+          
+          if (currentCount >= selectedRole.max_assignments) {
+            setRoleLimitError({
+              role: selectedRole.display_name,
+              limit: selectedRole.max_assignments,
+            });
+            return;
+          }
+        }
+      }
+    }
+    
     setIsSubmitting(true);
     try {
       const result = await updateUser({ id, ...updateData });
@@ -857,6 +905,8 @@ export const Users: React.FC = () => {
                     onEdit={setEditingUser}
                     onDelete={setDeletingUser}
                     onViewProfile={setViewingUser}
+                    isMenuOpen={openMenuId === user.id}
+                    onToggleMenu={(userId) => setOpenMenuId(openMenuId === userId ? null : userId)}
                   />
                 ))}
               </tbody>
@@ -1059,7 +1109,29 @@ export const Users: React.FC = () => {
                     {viewingUser.status}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {viewingUser.role?.name || 'No Role'}
+                    {(() => {
+                      // Try to get role display name from roles array first
+                      const role = roles.find(r => r.name === viewingUser.user_type);
+                      if (role) {
+                        return role.display_name;
+                      }
+                      
+                      // Fallback to mapping if role not found in roles array
+                      const roleMap: Record<User['user_type'], string> = {
+                        super_admin: 'Super Administrator',
+                        admin: 'Administrator',
+                        billing_manager: 'Billing Manager',
+                        noc_manager: 'NOC Manager',
+                        support_staff: 'Support Staff',
+                        reseller_admin: 'Reseller Administrator',
+                        sub_reseller_admin: 'Sub-Reseller Administrator',
+                        field_staff: 'Field Staff',
+                        accountant: 'Accountant',
+                        customer_service: 'Customer Service',
+                        technical_support: 'Technical Support',
+                      };
+                      return roleMap[viewingUser.user_type] || viewingUser.user_type;
+                    })()}
                   </span>
                 </div>
               </div>
@@ -1154,6 +1226,71 @@ export const Users: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Role Permissions */}
+              {(() => {
+                const userRole = roles.find(r => r.name === viewingUser.user_type);
+                
+                // Only show section if user has a role
+                if (!userRole) return null;
+                
+                const rolePermissions = userRole.permissions || [];
+                
+                return (
+                  <div className="space-y-4 md:col-span-2">
+                    <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide flex items-center space-x-2">
+                      <Shield className="w-4 h-4" />
+                      <span>Role Permissions</span>
+                      <span className="text-xs font-normal text-gray-500">
+                        ({rolePermissions.length} permission{rolePermissions.length !== 1 ? 's' : ''})
+                      </span>
+                    </h4>
+                    
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      {rolePermissions.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {rolePermissions.map((permission) => (
+                              <div 
+                                key={permission.id}
+                                className="flex items-center space-x-2 text-xs bg-white px-3 py-2 rounded-md border border-gray-200"
+                              >
+                                <svg 
+                                  className="w-3 h-3 text-green-600 flex-shrink-0" 
+                                  fill="currentColor" 
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path 
+                                    fillRule="evenodd" 
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
+                                    clipRule="evenodd" 
+                                  />
+                                </svg>
+                                <span className="text-gray-700 truncate" title={permission.name}>
+                                  {permission.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-xs text-gray-500">
+                              These permissions are inherited from the <strong className="text-gray-700">{userRole.display_name}</strong> role.
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-4">
+                          <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">
+                            No permissions assigned to the <strong>{userRole.display_name}</strong> role.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Additional Information */}
               <div className="space-y-4 md:col-span-2">

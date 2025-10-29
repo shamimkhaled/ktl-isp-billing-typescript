@@ -197,7 +197,8 @@ export interface User {
   profile_photo?: string;
   language_preference: 'en' | 'bn';
   timezone: string;
-  roles: UserRole[];
+  role?: Role; // Single role object from API
+  roles: UserRole[]; // Legacy array of role assignments
   permissions: string;
   last_login?: string;
   date_joined: string;
