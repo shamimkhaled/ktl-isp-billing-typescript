@@ -200,10 +200,10 @@ const menuItems: MenuItem[] = [
     id: "settings",
     label: "Settings",
     icon: Settings,
-    path: "/settings",
     gradient: "from-gray-400 to-slate-400",
     subItems: [
       { label: "Organization Settings", path: "/settings/organization" },
+      { label: "Router Settings", path: "/settings/router" },
       { label: "General Settings", path: "/settings" },
     ],
   },

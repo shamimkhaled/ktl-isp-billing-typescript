@@ -45,6 +45,11 @@ const OrganizationSettings = lazy(() =>
     default: m.OrganizationSettings,
   }))
 );
+const RouterSettings = lazy(() =>
+  import("./pages/Settings/RouterSettings").then((m) => ({
+    default: m.RouterSettings,
+  }))
+);
 const MainProfile = lazy(() =>
   import("./pages/UserManagement/MainProfile").then((m) => ({ default: m.MainProfile }))
 );
@@ -413,6 +418,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <OrganizationSettings />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/router"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RouterSettings />
                 </Layout>
               </ProtectedRoute>
             }
