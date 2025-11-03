@@ -870,9 +870,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.ip2}
                   onChange={(e) => handleInputChange('ip2', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.ip2 ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 10.0.0.1"
                 />
+                {formErrors.ip2 && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.ip2}</p>
+                )}
               </div>
 
               {/* Backup IP */}
@@ -884,9 +889,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.backupIp}
                   onChange={(e) => handleInputChange('backupIp', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.backupIp ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 192.168.88.100"
                 />
+                {formErrors.backupIp && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.backupIp}</p>
+                )}
               </div>
 
               {/* Name - Required */}
@@ -995,9 +1005,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.apiPort}
                   onChange={(e) => handleInputChange('apiPort', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiPort ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 8728"
                 />
+                {formErrors.apiPort && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiPort}</p>
+                )}
               </div>
 
               {/* SNMP */}
@@ -1009,9 +1024,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.snmp}
                   onChange={(e) => handleInputChange('snmp', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.snmp ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="SNMP community string"
                 />
+                {formErrors.snmp && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.snmp}</p>
+                )}
               </div>
 
               {/* SSTP IP */}
@@ -1023,9 +1043,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.sstpIp}
                   onChange={(e) => handleInputChange('sstpIp', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.sstpIp ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 192.168.88.50"
                 />
+                {formErrors.sstpIp && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.sstpIp}</p>
+                )}
               </div>
 
               {/* API-SSL Port */}
@@ -1037,9 +1062,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.apiSslPort}
                   onChange={(e) => handleInputChange('apiSslPort', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiSslPort ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 8729"
                 />
+                {formErrors.apiSslPort && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiSslPort}</p>
+                )}
               </div>
             </div>
 
@@ -1131,9 +1161,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.ip2}
                   onChange={(e) => handleInputChange('ip2', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.ip2 ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 10.0.0.1"
                 />
+                {formErrors.ip2 && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.ip2}</p>
+                )}
               </div>
 
               {/* Backup IP */}
@@ -1145,9 +1180,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.backupIp}
                   onChange={(e) => handleInputChange('backupIp', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.backupIp ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 192.168.88.100"
                 />
+                {formErrors.backupIp && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.backupIp}</p>
+                )}
               </div>
 
               {/* Name - Required */}
@@ -1256,9 +1296,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.apiPort}
                   onChange={(e) => handleInputChange('apiPort', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiPort ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 8728"
                 />
+                {formErrors.apiPort && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiPort}</p>
+                )}
               </div>
 
               {/* SNMP */}
@@ -1270,9 +1315,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.snmp}
                   onChange={(e) => handleInputChange('snmp', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.snmp ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="SNMP community string"
                 />
+                {formErrors.snmp && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.snmp}</p>
+                )}
               </div>
 
               {/* SSTP IP */}
@@ -1284,9 +1334,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.sstpIp}
                   onChange={(e) => handleInputChange('sstpIp', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.sstpIp ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 192.168.88.50"
                 />
+                {formErrors.sstpIp && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.sstpIp}</p>
+                )}
               </div>
 
               {/* API-SSL Port */}
@@ -1298,9 +1353,14 @@ export const RouterSettings: React.FC = () => {
                   type="text"
                   value={formData.apiSslPort}
                   onChange={(e) => handleInputChange('apiSslPort', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiSslPort ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="e.g., 8729"
                 />
+                {formErrors.apiSslPort && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiSslPort}</p>
+                )}
               </div>
             </div>
 
