@@ -38,6 +38,24 @@ interface RouterData {
   identity: string;
 }
 
+// Add Router Form Data
+interface AddRouterFormData {
+  ip: string;
+  ip2?: string;
+  backupIp?: string;
+  name: string;
+  radiusSecret: string;
+  incomingPort: string;
+  apiUsername: string;
+  apiPassword: string;
+  apiPort: string;
+  snmp?: string;
+  apiSsl: boolean;
+  ipv6Enable: boolean;
+  sstpIp?: string;
+  apiSslPort?: string;
+}
+
 // Main Router Settings Component
 export const RouterSettings: React.FC = () => {
   const [routers, setRouters] = useState<RouterData[]>([]);
@@ -46,6 +64,24 @@ export const RouterSettings: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRouter, setSelectedRouter] = useState<RouterData | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState<AddRouterFormData>({
+    ip: '',
+    ip2: '',
+    backupIp: '',
+    name: '',
+    radiusSecret: '',
+    incomingPort: '',
+    apiUsername: '',
+    apiPassword: '',
+    apiPort: '8728',
+    snmp: '',
+    apiSsl: false,
+    ipv6Enable: false,
+    sstpIp: '',
+    apiSslPort: '',
+  });
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof AddRouterFormData, string>>>({});
 
   useEffect(() => {
     loadRouters();
@@ -185,6 +221,110 @@ export const RouterSettings: React.FC = () => {
     // TODO: Implement delete confirmation modal
   };
 
+  const handleAddRouter = () => {
+    setFormData({
+      ip: '',
+      ip2: '',
+      backupIp: '',
+      name: '',
+      radiusSecret: '',
+      incomingPort: '1812',
+      apiUsername: '',
+      apiPassword: '',
+      apiPort: '8728',
+      snmp: '',
+      apiSsl: false,
+      ipv6Enable: false,
+      sstpIp: '',
+      apiSslPort: '',
+    });
+    setFormErrors({});
+    setShowAddModal(true);
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Partial<Record<keyof AddRouterFormData, string>> = {};
+
+    // Required fields validation
+    if (!formData.ip.trim()) {
+      errors.ip = 'IP address is required';
+    } else if (!/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(formData.ip)) {
+      errors.ip = 'Invalid IP address format';
+    }
+
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    if (!formData.radiusSecret.trim()) {
+      errors.radiusSecret = 'RADIUS Secret is required';
+    }
+
+    if (!formData.incomingPort.trim()) {
+      errors.incomingPort = 'Incoming Port is required';
+    } else if (!/^\d+$/.test(formData.incomingPort)) {
+      errors.incomingPort = 'Port must be a number';
+    }
+
+    if (!formData.apiUsername.trim()) {
+      errors.apiUsername = 'API Username is required';
+    }
+
+    if (!formData.apiPassword.trim()) {
+      errors.apiPassword = 'API Password is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmitRouter = async () => {
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      // TODO: Replace with actual API call
+      // await routerService.createRouter(formData);
+
+      // Mock: Add to local state
+      const newRouter: RouterData = {
+        id: `${routers.length + 1}`,
+        ip: formData.ip,
+        ip2: formData.ip2,
+        name: formData.name,
+        incoming: formData.incomingPort,
+        apiLogin: formData.apiUsername,
+        apiPort: formData.apiPort,
+        apiSsl: formData.apiSsl,
+        backupRadiusIp: formData.backupIp,
+        status: 'offline',
+        onlineUsers: 0,
+        rosVersion: 'Unknown',
+        wwwPort: '80',
+        sstpIp: formData.sstpIp,
+        connectStatus: 'disconnected',
+        connectedVia: 'N/A',
+        identity: formData.name,
+      };
+
+      setRouters([...routers, newRouter]);
+      setShowAddModal(false);
+      toast.success('Router added successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add router');
+    }
+  };
+
+  const handleInputChange = (field: keyof AddRouterFormData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -214,7 +354,7 @@ export const RouterSettings: React.FC = () => {
           <Button
             variant="primary"
             icon={<Plus className="w-4 h-4" />}
-            onClick={() => toast.info('Add new router')}
+            onClick={handleAddRouter}
           >
             Add Router
           </Button>
@@ -526,6 +666,264 @@ export const RouterSettings: React.FC = () => {
                 onClick={() => setShowDetailsModal(false)}
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Add Router Modal */}
+      {showAddModal && (
+        <Modal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          title="Add New Router"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* IP - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  IP <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.ip}
+                  onChange={(e) => handleInputChange('ip', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.ip ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 192.168.88.1"
+                />
+                {formErrors.ip && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.ip}</p>
+                )}
+              </div>
+
+              {/* IP-2 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  IP-2
+                </label>
+                <input
+                  type="text"
+                  value={formData.ip2}
+                  onChange={(e) => handleInputChange('ip2', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 10.0.0.1"
+                />
+              </div>
+
+              {/* Backup IP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Backup IP
+                </label>
+                <input
+                  type="text"
+                  value={formData.backupIp}
+                  onChange={(e) => handleInputChange('backupIp', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 192.168.88.100"
+                />
+              </div>
+
+              {/* Name - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., Main Router"
+                />
+                {formErrors.name && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.name}</p>
+                )}
+              </div>
+
+              {/* RADIUS Secret - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  RADIUS Secret <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={formData.radiusSecret}
+                  onChange={(e) => handleInputChange('radiusSecret', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.radiusSecret ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter RADIUS secret"
+                />
+                {formErrors.radiusSecret && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.radiusSecret}</p>
+                )}
+              </div>
+
+              {/* Incoming Port - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Incoming Port <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.incomingPort}
+                  onChange={(e) => handleInputChange('incomingPort', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.incomingPort ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 1812"
+                />
+                {formErrors.incomingPort && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.incomingPort}</p>
+                )}
+              </div>
+
+              {/* API Username - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API Username <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.apiUsername}
+                  onChange={(e) => handleInputChange('apiUsername', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiUsername ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., billing"
+                  autoComplete="username"
+                />
+                {formErrors.apiUsername && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiUsername}</p>
+                )}
+              </div>
+
+              {/* API Password - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API Password <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={formData.apiPassword}
+                  onChange={(e) => handleInputChange('apiPassword', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiPassword ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter API password"
+                  autoComplete="new-password"
+                />
+                {formErrors.apiPassword && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiPassword}</p>
+                )}
+              </div>
+
+              {/* API Port */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API Port
+                </label>
+                <input
+                  type="text"
+                  value={formData.apiPort}
+                  onChange={(e) => handleInputChange('apiPort', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 8728"
+                />
+              </div>
+
+              {/* SNMP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SNMP
+                </label>
+                <input
+                  type="text"
+                  value={formData.snmp}
+                  onChange={(e) => handleInputChange('snmp', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="SNMP community string"
+                />
+              </div>
+
+              {/* SSTP IP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SSTP IP
+                </label>
+                <input
+                  type="text"
+                  value={formData.sstpIp}
+                  onChange={(e) => handleInputChange('sstpIp', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 192.168.88.50"
+                />
+              </div>
+
+              {/* API-SSL Port */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API-SSL Port (SSTP)
+                </label>
+                <input
+                  type="text"
+                  value={formData.apiSslPort}
+                  onChange={(e) => handleInputChange('apiSslPort', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 8729"
+                />
+              </div>
+            </div>
+
+            {/* Checkboxes */}
+            <div className="flex gap-6 pt-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="apiSsl"
+                  checked={formData.apiSsl}
+                  onChange={(e) => handleInputChange('apiSsl', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="apiSsl" className="ml-2 block text-sm text-gray-900">
+                  API SSL
+                </label>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="ipv6Enable"
+                  checked={formData.ipv6Enable}
+                  onChange={(e) => handleInputChange('ipv6Enable', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="ipv6Enable" className="ml-2 block text-sm text-gray-900">
+                  IPv6 Enable
+                </label>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => setShowAddModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSubmitRouter}
+              >
+                Add Router
               </Button>
             </div>
           </div>
