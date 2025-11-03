@@ -65,6 +65,8 @@ export const RouterSettings: React.FC = () => {
   const [selectedRouter, setSelectedRouter] = useState<RouterData | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRouter, setEditingRouter] = useState<RouterData | null>(null);
   const [formData, setFormData] = useState<AddRouterFormData>({
     ip: '',
     ip2: '',
@@ -212,8 +214,25 @@ export const RouterSettings: React.FC = () => {
   };
 
   const handleEdit = (router: RouterData) => {
-    toast.info(`Editing ${router.name}`);
-    // TODO: Implement edit modal or navigation
+    setEditingRouter(router);
+    setFormData({
+      ip: router.ip,
+      ip2: router.ip2 || '',
+      backupIp: router.backupRadiusIp || '',
+      name: router.name,
+      radiusSecret: '', // Keep empty for security
+      incomingPort: router.incoming,
+      apiUsername: router.apiLogin,
+      apiPassword: '', // Keep empty for security
+      apiPort: router.apiPort,
+      snmp: '',
+      apiSsl: router.apiSsl,
+      ipv6Enable: false,
+      sstpIp: router.sstpIp || '',
+      apiSslPort: '',
+    });
+    setFormErrors({});
+    setShowEditModal(true);
   };
 
   const handleDelete = (router: RouterData) => {
@@ -242,7 +261,7 @@ export const RouterSettings: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = (isEdit: boolean = false): boolean => {
     const errors: Partial<Record<keyof AddRouterFormData, string>> = {};
 
     // Required fields validation
@@ -256,7 +275,8 @@ export const RouterSettings: React.FC = () => {
       errors.name = 'Name is required';
     }
 
-    if (!formData.radiusSecret.trim()) {
+    // For edit mode, passwords are optional (only required if provided)
+    if (!isEdit && !formData.radiusSecret.trim()) {
       errors.radiusSecret = 'RADIUS Secret is required';
     }
 
@@ -270,7 +290,8 @@ export const RouterSettings: React.FC = () => {
       errors.apiUsername = 'API Username is required';
     }
 
-    if (!formData.apiPassword.trim()) {
+    // For edit mode, passwords are optional (only required if provided)
+    if (!isEdit && !formData.apiPassword.trim()) {
       errors.apiPassword = 'API Password is required';
     }
 
@@ -314,6 +335,42 @@ export const RouterSettings: React.FC = () => {
       toast.success('Router added successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to add router');
+    }
+  };
+
+  const handleSubmitEdit = async () => {
+    if (!validateForm(true)) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!editingRouter) return;
+
+    try {
+      // TODO: Replace with actual API call
+      // await routerService.updateRouter(editingRouter.id, formData);
+
+      // Mock: Update in local state
+      const updatedRouter: RouterData = {
+        ...editingRouter,
+        ip: formData.ip,
+        ip2: formData.ip2,
+        name: formData.name,
+        incoming: formData.incomingPort,
+        apiLogin: formData.apiUsername,
+        apiPort: formData.apiPort,
+        apiSsl: formData.apiSsl,
+        backupRadiusIp: formData.backupIp,
+        sstpIp: formData.sstpIp,
+        identity: formData.name,
+      };
+
+      setRouters(routers.map(r => r.id === editingRouter.id ? updatedRouter : r));
+      setShowEditModal(false);
+      setEditingRouter(null);
+      toast.success('Router updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update router');
     }
   };
 
@@ -924,6 +981,270 @@ export const RouterSettings: React.FC = () => {
                 onClick={handleSubmitRouter}
               >
                 Add Router
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Edit Router Modal */}
+      {showEditModal && editingRouter && (
+        <Modal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingRouter(null);
+          }}
+          title={`Edit Router: ${editingRouter.name}`}
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* IP - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  IP <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.ip}
+                  onChange={(e) => handleInputChange('ip', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.ip ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 192.168.88.1"
+                />
+                {formErrors.ip && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.ip}</p>
+                )}
+              </div>
+
+              {/* IP-2 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  IP-2
+                </label>
+                <input
+                  type="text"
+                  value={formData.ip2}
+                  onChange={(e) => handleInputChange('ip2', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 10.0.0.1"
+                />
+              </div>
+
+              {/* Backup IP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Backup IP
+                </label>
+                <input
+                  type="text"
+                  value={formData.backupIp}
+                  onChange={(e) => handleInputChange('backupIp', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 192.168.88.100"
+                />
+              </div>
+
+              {/* Name - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., Main Router"
+                />
+                {formErrors.name && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.name}</p>
+                )}
+              </div>
+
+              {/* RADIUS Secret - Optional in Edit Mode */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  RADIUS Secret
+                </label>
+                <input
+                  type="password"
+                  value={formData.radiusSecret}
+                  onChange={(e) => handleInputChange('radiusSecret', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.radiusSecret ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter new RADIUS secret (leave empty to keep current)"
+                />
+                {formErrors.radiusSecret && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.radiusSecret}</p>
+                )}
+              </div>
+
+              {/* Incoming Port - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Incoming Port <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.incomingPort}
+                  onChange={(e) => handleInputChange('incomingPort', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.incomingPort ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 1812"
+                />
+                {formErrors.incomingPort && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.incomingPort}</p>
+                )}
+              </div>
+
+              {/* API Username - Required */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API Username <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.apiUsername}
+                  onChange={(e) => handleInputChange('apiUsername', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiUsername ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., billing"
+                  autoComplete="username"
+                />
+                {formErrors.apiUsername && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiUsername}</p>
+                )}
+              </div>
+
+              {/* API Password - Optional in Edit Mode */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API Password 
+                </label>
+                <input
+                  type="password"
+                  value={formData.apiPassword}
+                  onChange={(e) => handleInputChange('apiPassword', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.apiPassword ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter new API password (leave empty to keep current)"
+                  autoComplete="new-password"
+                />
+                {formErrors.apiPassword && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.apiPassword}</p>
+                )}
+              </div>
+
+              {/* API Port */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API Port
+                </label>
+                <input
+                  type="text"
+                  value={formData.apiPort}
+                  onChange={(e) => handleInputChange('apiPort', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 8728"
+                />
+              </div>
+
+              {/* SNMP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SNMP
+                </label>
+                <input
+                  type="text"
+                  value={formData.snmp}
+                  onChange={(e) => handleInputChange('snmp', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="SNMP community string"
+                />
+              </div>
+
+              {/* SSTP IP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SSTP IP
+                </label>
+                <input
+                  type="text"
+                  value={formData.sstpIp}
+                  onChange={(e) => handleInputChange('sstpIp', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 192.168.88.50"
+                />
+              </div>
+
+              {/* API-SSL Port */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  API-SSL Port (SSTP)
+                </label>
+                <input
+                  type="text"
+                  value={formData.apiSslPort}
+                  onChange={(e) => handleInputChange('apiSslPort', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 8729"
+                />
+              </div>
+            </div>
+
+            {/* Checkboxes */}
+            <div className="flex gap-6 pt-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="editApiSsl"
+                  checked={formData.apiSsl}
+                  onChange={(e) => handleInputChange('apiSsl', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="editApiSsl" className="ml-2 block text-sm text-gray-900">
+                  API SSL
+                </label>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="editIpv6Enable"
+                  checked={formData.ipv6Enable}
+                  onChange={(e) => handleInputChange('ipv6Enable', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="editIpv6Enable" className="ml-2 block text-sm text-gray-900">
+                  IPv6 Enable
+                </label>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingRouter(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSubmitEdit}
+              >
+                Update Router
               </Button>
             </div>
           </div>

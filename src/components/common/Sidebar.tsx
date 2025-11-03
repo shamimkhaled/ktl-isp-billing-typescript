@@ -292,9 +292,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
           <div className="p-4">
             <nav className="space-y-2">
               {menuItems.map((item) => {
-                const isItemActive =
-                  isActive(item.path) || isSubItemActive(item);
                 const isExpanded = expandedMenus[item.id];
+                const isItemActive =
+                  isActive(item.path) || isSubItemActive(item) || (isExpanded && item.subItems);
                 const Icon = item.icon;
 
                 return (
@@ -379,20 +379,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                           >
                             <div className="flex items-center space-x-3 sm:space-x-4">
                               <div
-                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
-                                  isItemActive
+                                className={
+                                  `w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ` +
+                                  (isItemActive
                                     ? `bg-gradient-to-br ${item.gradient} text-white`
-                                    : "bg-white/10 text-white/80 group-hover:bg-white/20"
-                                }`}
+                                    : themeMode === "dark"
+                                    ? "bg-white/10 text-white/80 group-hover:bg-white/20"
+                                    : "bg-gray-100 text-gray-800 group-hover:bg-gray-200")
+                                }
                               >
-                                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <Icon
+                                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                                    themeMode === "dark"
+                                      ? ""
+                                      : "text-gray-800"
+                                  }`}
+                                />
                               </div>
                               <span
-                                className={`font-semibold transition-colors text-sm sm:text-base ${
-                                  isItemActive
+                                className={
+                                  `font-semibold transition-colors text-sm sm:text-base ` +
+                                  (isItemActive
                                     ? "text-black"
-                                    : "text-white/80 group-hover:text-white"
-                                }`}
+                                    : themeMode === "dark"
+                                    ? "text-white/80 group-hover:text-white"
+                                    : "text-gray-900 group-hover:text-gray-800")
+                                }
                               >
                                 {item.label}
                               </span>
