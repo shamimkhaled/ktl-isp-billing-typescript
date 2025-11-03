@@ -75,7 +75,7 @@ export const RouterSettings: React.FC = () => {
     backupIp: '',
     name: '',
     radiusSecret: '',
-    incomingPort: '',
+    incomingPort: '1812',
     apiUsername: '',
     apiPassword: '',
     apiPort: '8728',
@@ -280,47 +280,121 @@ export const RouterSettings: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const validateForm = (isEdit: boolean = false): boolean => {
+  const validateForm = (isEdit: boolean = false): { isValid: boolean; errors: Partial<Record<keyof AddRouterFormData, string>> } => {
     const errors: Partial<Record<keyof AddRouterFormData, string>> = {};
 
-    // Required fields validation
+    // IP address validation (required)
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    
     if (!formData.ip.trim()) {
       errors.ip = 'IP address is required';
-    } else if (!/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(formData.ip)) {
-      errors.ip = 'Invalid IP address format';
+    } else if (!ipRegex.test(formData.ip)) {
+      errors.ip = 'Invalid IP address format (e.g., 192.168.1.1)';
     }
 
+    // IP-2 validation (optional)
+    if (formData.ip2 && formData.ip2.trim() && !ipRegex.test(formData.ip2)) {
+      errors.ip2 = 'Invalid IP address format';
+    }
+
+    // Backup IP validation (optional)
+    if (formData.backupIp && formData.backupIp.trim() && !ipRegex.test(formData.backupIp)) {
+      errors.backupIp = 'Invalid IP address format';
+    }
+
+    // Name validation (required, alphanumeric and special chars allowed)
     if (!formData.name.trim()) {
       errors.name = 'Name is required';
+    } else if (formData.name.length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    } else if (formData.name.length > 50) {
+      errors.name = 'Name must not exceed 50 characters';
     }
 
-    // For edit mode, passwords are optional (only required if provided)
+    // RADIUS Secret validation
     if (!isEdit && !formData.radiusSecret.trim()) {
       errors.radiusSecret = 'RADIUS Secret is required';
+    } else if (formData.radiusSecret && formData.radiusSecret.length > 0 && formData.radiusSecret.length < 6) {
+      errors.radiusSecret = 'RADIUS Secret must be at least 6 characters';
     }
 
+    // Port validation helper
+    const validatePort = (port: string): string | null => {
+      if (!port.trim()) return null;
+      if (!/^\d+$/.test(port)) {
+        return 'Port must be a number';
+      }
+      const portNum = parseInt(port, 10);
+      if (portNum < 1 || portNum > 65535) {
+        return 'Port must be between 1 and 65535';
+      }
+      return null;
+    };
+
+    // Incoming Port validation (required)
     if (!formData.incomingPort.trim()) {
       errors.incomingPort = 'Incoming Port is required';
-    } else if (!/^\d+$/.test(formData.incomingPort)) {
-      errors.incomingPort = 'Port must be a number';
+    } else {
+      const portError = validatePort(formData.incomingPort);
+      if (portError) errors.incomingPort = portError;
     }
 
+    // API Port validation (optional but must be valid if provided)
+    if (formData.apiPort && formData.apiPort.trim()) {
+      const portError = validatePort(formData.apiPort);
+      if (portError) errors.apiPort = portError;
+    }
+
+    // API-SSL Port validation (optional but must be valid if provided)
+    if (formData.apiSslPort && formData.apiSslPort.trim()) {
+      const portError = validatePort(formData.apiSslPort);
+      if (portError) errors.apiSslPort = portError;
+    }
+
+    // API Username validation (required)
     if (!formData.apiUsername.trim()) {
       errors.apiUsername = 'API Username is required';
+    } else if (formData.apiUsername.length < 3) {
+      errors.apiUsername = 'Username must be at least 3 characters';
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.apiUsername)) {
+      errors.apiUsername = 'Username can only contain letters, numbers, hyphens, and underscores';
     }
 
-    // For edit mode, passwords are optional (only required if provided)
+    // API Password validation
     if (!isEdit && !formData.apiPassword.trim()) {
       errors.apiPassword = 'API Password is required';
+    } else if (formData.apiPassword && formData.apiPassword.length > 0 && formData.apiPassword.length < 6) {
+      errors.apiPassword = 'Password must be at least 6 characters';
+    }
+
+    // SSTP IP validation (optional)
+    if (formData.sstpIp && formData.sstpIp.trim() && !ipRegex.test(formData.sstpIp)) {
+      errors.sstpIp = 'Invalid IP address format';
+    }
+
+    // SNMP validation (optional)
+    if (formData.snmp && formData.snmp.trim() && formData.snmp.length < 3) {
+      errors.snmp = 'SNMP community string must be at least 3 characters';
     }
 
     setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    return { isValid: Object.keys(errors).length === 0, errors };
   };
 
   const handleSubmitRouter = async () => {
-    if (!validateForm()) {
-      toast.error('Please fill in all required fields');
+    const validation = validateForm();
+    if (!validation.isValid) {
+      // Show specific error if there are validation issues
+      const errorFields = Object.keys(validation.errors).filter(key => validation.errors[key as keyof AddRouterFormData]);
+      if (errorFields.length > 0) {
+        const fieldNames = errorFields.map(field => {
+          // Convert camelCase to readable format
+          return field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        });
+        toast.error(`Validation errors in: ${fieldNames.join(', ')}`);
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
 
@@ -358,8 +432,19 @@ export const RouterSettings: React.FC = () => {
   };
 
   const handleSubmitEdit = async () => {
-    if (!validateForm(true)) {
-      toast.error('Please fill in all required fields');
+    const validation = validateForm(true);
+    if (!validation.isValid) {
+      // Show specific error if there are validation issues
+      const errorFields = Object.keys(validation.errors).filter(key => validation.errors[key as keyof AddRouterFormData]);
+      if (errorFields.length > 0) {
+        const fieldNames = errorFields.map(field => {
+          // Convert camelCase to readable format
+          return field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        });
+        toast.error(`Validation errors in: ${fieldNames.join(', ')}`);
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
 
