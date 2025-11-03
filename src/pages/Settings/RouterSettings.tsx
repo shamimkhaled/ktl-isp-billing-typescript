@@ -66,7 +66,9 @@ export const RouterSettings: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingRouter, setEditingRouter] = useState<RouterData | null>(null);
+  const [deletingRouter, setDeletingRouter] = useState<RouterData | null>(null);
   const [formData, setFormData] = useState<AddRouterFormData>({
     ip: '',
     ip2: '',
@@ -236,8 +238,25 @@ export const RouterSettings: React.FC = () => {
   };
 
   const handleDelete = (router: RouterData) => {
-    toast.info(`Delete ${router.name}`);
-    // TODO: Implement delete confirmation modal
+    setDeletingRouter(router);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingRouter) return;
+
+    try {
+      // TODO: Replace with actual API call
+      // await routerService.deleteRouter(deletingRouter.id);
+
+      // Mock: Remove from local state
+      setRouters(routers.filter(r => r.id !== deletingRouter.id));
+      setShowDeleteModal(false);
+      setDeletingRouter(null);
+      toast.success(`${deletingRouter.name} deleted successfully`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete router');
+    }
   };
 
   const handleAddRouter = () => {
@@ -1245,6 +1264,64 @@ export const RouterSettings: React.FC = () => {
                 onClick={handleSubmitEdit}
               >
                 Update Router
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deletingRouter && (
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setDeletingRouter(null);
+          }}
+          title="Confirm Delete"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Delete Router
+                </h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  Are you sure you want to delete <strong>{deletingRouter.name}</strong>?
+                </p>
+                <p className="text-sm text-gray-600">
+                  IP: <strong>{deletingRouter.ip}</strong>
+                </p>
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-800">
+                    <strong>Warning:</strong> This action cannot be undone. All router configuration and data will be permanently removed.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingRouter(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+              >
+                Delete Router
               </Button>
             </div>
           </div>
