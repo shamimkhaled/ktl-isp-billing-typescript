@@ -10,12 +10,21 @@ import {
   Trash2,
   Plus,
   RefreshCw,
+  Network,
+  X,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { Modal } from '../../components/common/Modal';
 import { toast } from 'sonner';
+
+// PPTP Configuration
+interface PptpConfig {
+  username: string;
+  password: string;
+  ip: string;
+}
 
 // Router data type
 interface RouterData {
@@ -36,6 +45,7 @@ interface RouterData {
   connectStatus: 'connected' | 'disconnected';
   connectedVia: string;
   identity: string;
+  pptp?: PptpConfig;
 }
 
 // Add Router Form Data
@@ -54,6 +64,7 @@ interface AddRouterFormData {
   ipv6Enable: boolean;
   sstpIp?: string;
   apiSslPort?: string;
+  rosVersion?: string;
 }
 
 // Main Router Settings Component
@@ -67,8 +78,17 @@ export const RouterSettings: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPptpModal, setShowPptpModal] = useState(false);
   const [editingRouter, setEditingRouter] = useState<RouterData | null>(null);
   const [deletingRouter, setDeletingRouter] = useState<RouterData | null>(null);
+  const [pptpRouter, setPptpRouter] = useState<RouterData | null>(null);
+  const [pptpFormData, setPptpFormData] = useState<PptpConfig>({
+    username: '',
+    password: '',
+    ip: '',
+  });
+  const [pptpFormErrors, setPptpFormErrors] = useState<Partial<Record<keyof PptpConfig, string>>>({});
+  const [showPptpListModal, setShowPptpListModal] = useState(false);
   const [formData, setFormData] = useState<AddRouterFormData>({
     ip: '',
     ip2: '',
@@ -84,6 +104,7 @@ export const RouterSettings: React.FC = () => {
     ipv6Enable: false,
     sstpIp: '',
     apiSslPort: '',
+    rosVersion: '',
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof AddRouterFormData, string>>>({});
 
@@ -232,6 +253,7 @@ export const RouterSettings: React.FC = () => {
       ipv6Enable: false,
       sstpIp: router.sstpIp || '',
       apiSslPort: '',
+      rosVersion: router.rosVersion || '',
     });
     setFormErrors({});
     setShowEditModal(true);
@@ -259,6 +281,116 @@ export const RouterSettings: React.FC = () => {
     }
   };
 
+  const handleAddPptp = (router: RouterData) => {
+    setPptpRouter(router);
+    setPptpFormData({
+      username: router.pptp?.username || '',
+      password: router.pptp?.password || '',
+      ip: router.pptp?.ip || '',
+    });
+    setPptpFormErrors({});
+    setShowPptpModal(true);
+  };
+
+  const validatePptpForm = (): { isValid: boolean; errors: Partial<Record<keyof PptpConfig, string>> } => {
+    const errors: Partial<Record<keyof PptpConfig, string>> = {};
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+    if (!pptpFormData.username.trim()) {
+      errors.username = 'Username is required';
+    } else if (pptpFormData.username.length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+    }
+
+    if (!pptpFormData.password.trim()) {
+      errors.password = 'Password is required';
+    } else if (pptpFormData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!pptpFormData.ip.trim()) {
+      errors.ip = 'IP address is required';
+    } else if (!ipRegex.test(pptpFormData.ip)) {
+      errors.ip = 'Invalid IP address format (e.g., 192.168.1.1)';
+    }
+
+    setPptpFormErrors(errors);
+    return { isValid: Object.keys(errors).length === 0, errors };
+  };
+
+  const handleSubmitPptp = async () => {
+    const validation = validatePptpForm();
+    if (!validation.isValid) {
+      const errorFields = Object.keys(validation.errors).filter(key => validation.errors[key as keyof PptpConfig]);
+      if (errorFields.length > 0) {
+        const fieldNames = errorFields.map(field => {
+          return field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        });
+        toast.error(`Validation errors in: ${fieldNames.join(', ')}`);
+      }
+      return;
+    }
+
+    if (!pptpRouter) return;
+
+    try {
+      // TODO: Replace with actual API call
+      // await routerService.updateRouterPptp(pptpRouter.id, pptpFormData);
+
+      // Mock: Update in local state
+      const updatedRouter: RouterData = {
+        ...pptpRouter,
+        pptp: {
+          username: pptpFormData.username,
+          password: pptpFormData.password,
+          ip: pptpFormData.ip,
+        },
+      };
+
+      setRouters(routers.map(r => r.id === pptpRouter.id ? updatedRouter : r));
+      setShowPptpModal(false);
+      setPptpRouter(null);
+      toast.success(`PPTP configured for ${pptpRouter.name}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to configure PPTP');
+    }
+  };
+
+  const handlePptpInputChange = (field: keyof PptpConfig, value: string) => {
+    setPptpFormData(prev => ({ ...prev, [field]: value }));
+    if (pptpFormErrors[field]) {
+      setPptpFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleViewPptpList = () => {
+    setShowPptpListModal(true);
+  };
+
+  const getPptpConfiguredRouters = () => {
+    return routers.filter(router => router.pptp);
+  };
+
+  const handleRemovePptp = async (router: RouterData) => {
+    if (!router.pptp) return;
+
+    try {
+      // TODO: Replace with actual API call
+      // await routerService.removeRouterPptp(router.id);
+
+      // Mock: Remove PPTP from local state
+      const updatedRouter: RouterData = {
+        ...router,
+        pptp: undefined,
+      };
+
+      setRouters(routers.map(r => r.id === router.id ? updatedRouter : r));
+      toast.success(`PPTP removed from ${router.name}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to remove PPTP');
+    }
+  };
+
   const handleAddRouter = () => {
     setFormData({
       ip: '',
@@ -275,6 +407,7 @@ export const RouterSettings: React.FC = () => {
       ipv6Enable: false,
       sstpIp: '',
       apiSslPort: '',
+      rosVersion: '',
     });
     setFormErrors({});
     setShowAddModal(true);
@@ -415,7 +548,7 @@ export const RouterSettings: React.FC = () => {
         backupRadiusIp: formData.backupIp,
         status: 'offline',
         onlineUsers: 0,
-        rosVersion: 'Unknown',
+        rosVersion: formData.rosVersion || 'Unknown',
         wwwPort: '80',
         sstpIp: formData.sstpIp,
         connectStatus: 'disconnected',
@@ -466,6 +599,7 @@ export const RouterSettings: React.FC = () => {
         apiSsl: formData.apiSsl,
         backupRadiusIp: formData.backupIp,
         sstpIp: formData.sstpIp,
+        rosVersion: formData.rosVersion || editingRouter.rosVersion,
         identity: formData.name,
       };
 
@@ -511,6 +645,13 @@ export const RouterSettings: React.FC = () => {
             onClick={handleRefresh}
           >
             Refresh
+          </Button>
+          <Button
+            variant="outline"
+            icon={<Network className="w-4 h-4" />}
+            onClick={handleViewPptpList}
+          >
+            View PPTP List
           </Button>
           <Button
             variant="primary"
@@ -643,7 +784,14 @@ export const RouterSettings: React.FC = () => {
                       {router.ip2 || '-'}
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-900 font-medium">
-                      {router.name}
+                      <div className="flex items-center gap-2">
+                        {router.name}
+                        {router.pptp && (
+                          <span title="PPTP Configured">
+                            <Network className="w-4 h-4 text-blue-600" />
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-600">
                       {router.incoming}
@@ -691,6 +839,17 @@ export const RouterSettings: React.FC = () => {
                           title="Edit"
                         >
                           <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleAddPptp(router)}
+                          className={`transition-colors ${
+                            router.pptp 
+                              ? 'text-purple-600 hover:text-purple-800' 
+                              : 'text-gray-400 hover:text-purple-600'
+                          }`}
+                          title={router.pptp ? 'Edit PPTP' : 'Add PPTP'}
+                        >
+                          <Network className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(router)}
@@ -1071,6 +1230,25 @@ export const RouterSettings: React.FC = () => {
                   <p className="text-red-600 text-xs mt-1">{formErrors.apiSslPort}</p>
                 )}
               </div>
+
+              {/* ROS Version */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ROS Version
+                </label>
+                <input
+                  type="text"
+                  value={formData.rosVersion}
+                  onChange={(e) => handleInputChange('rosVersion', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.rosVersion ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 7.11.2"
+                />
+                {formErrors.rosVersion && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.rosVersion}</p>
+                )}
+              </div>
             </div>
 
             {/* Checkboxes */}
@@ -1362,6 +1540,25 @@ export const RouterSettings: React.FC = () => {
                   <p className="text-red-600 text-xs mt-1">{formErrors.apiSslPort}</p>
                 )}
               </div>
+
+              {/* ROS Version */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ROS Version
+                </label>
+                <input
+                  type="text"
+                  value={formData.rosVersion}
+                  onChange={(e) => handleInputChange('rosVersion', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.rosVersion ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 7.11.2"
+                />
+                {formErrors.rosVersion && (
+                  <p className="text-red-600 text-xs mt-1">{formErrors.rosVersion}</p>
+                )}
+              </div>
             </div>
 
             {/* Checkboxes */}
@@ -1467,6 +1664,180 @@ export const RouterSettings: React.FC = () => {
                 className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
               >
                 Delete Router
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* PPTP List Modal */}
+      <Modal
+        isOpen={showPptpListModal}
+        onClose={() => setShowPptpListModal(false)}
+        title="PPTP Configured Routers"
+      >
+        <div className="space-y-4">
+          {getPptpConfiguredRouters().length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Network className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No routers have PPTP configured yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {getPptpConfiguredRouters().map((router) => (
+                <div
+                  key={router.id}
+                  className="p-4 rounded-lg border bg-white border-gray-200 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Network className="w-5 h-5 text-blue-500" />
+                      <h3 className="font-semibold text-gray-900">
+                        {router.name}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+                        {router.ip}
+                      </span>
+                      <button
+                        onClick={() => handleRemovePptp(router)}
+                        className="text-red-600 hover:text-red-800 transition-colors p-1 hover:bg-red-50 rounded"
+                        title="Remove PPTP"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Username:</span>
+                      <span className="font-medium text-gray-900">
+                        {router.pptp?.username}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Password:</span>
+                      <span className="font-medium font-mono text-gray-900">
+                        {router.pptp?.password}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">PPTP IP:</span>
+                      <span className="font-medium text-gray-900">
+                        {router.pptp?.ip}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end mt-6">
+          <Button
+            onClick={() => setShowPptpListModal(false)}
+            variant="outline"
+          >
+            Close
+          </Button>
+        </div>
+      </Modal>
+
+      {/* PPTP Configuration Modal */}
+      {showPptpModal && pptpRouter && (
+        <Modal
+          isOpen={showPptpModal}
+          onClose={() => {
+            setShowPptpModal(false);
+            setPptpRouter(null);
+          }}
+          title={`Configure PPTP for ${pptpRouter.name}`}
+        >
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Point-to-Point Tunneling Protocol (PPTP)</strong> allows secure remote access to the router.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* PPTP Username */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={pptpFormData.username}
+                  onChange={(e) => handlePptpInputChange('username', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    pptpFormErrors.username ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="PPTP username"
+                  autoComplete="username"
+                />
+                {pptpFormErrors.username && (
+                  <p className="text-red-600 text-xs mt-1">{pptpFormErrors.username}</p>
+                )}
+              </div>
+
+              {/* PPTP Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={pptpFormData.password}
+                  onChange={(e) => handlePptpInputChange('password', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    pptpFormErrors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="PPTP password"
+                  autoComplete="new-password"
+                />
+                {pptpFormErrors.password && (
+                  <p className="text-red-600 text-xs mt-1">{pptpFormErrors.password}</p>
+                )}
+              </div>
+
+              {/* PPTP IP Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  IP Address <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={pptpFormData.ip}
+                  onChange={(e) => handlePptpInputChange('ip', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    pptpFormErrors.ip ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 192.168.88.254"
+                />
+                {pptpFormErrors.ip && (
+                  <p className="text-red-600 text-xs mt-1">{pptpFormErrors.ip}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowPptpModal(false);
+                  setPptpRouter(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSubmitPptp}
+              >
+                {pptpRouter.pptp ? 'Update PPTP' : 'Add PPTP'}
               </Button>
             </div>
           </div>
